@@ -9,7 +9,9 @@ Aplikasi lokal mengubah klip gameplay pilihan pengguna menjadi MP4 vertikal mela
 
 Keputusan dari percakapan: mendukung berbagai game, output Shorts/TikTok 9:16, dua preset (Subtitle + zoom ringan dan Meme ramai), serta alur AI membantu dengan template sebagai fondasi. Folder E:\Remotion kosong saat diperiksa, sehingga belum ada implementasi atau pola proyek yang perlu dipertahankan.
 
-Asumsi versi pertama: input berupa klip yang sudah dipotong. Rekaman panjang dapat dibuka sebagai file, tetapi aplikasi belum menyediakan pengelolaan banyak momen dari satu rekaman. Pengguna tetap dapat memperpendek rentang dalam klip. Pilihan ini mengikuti rekomendasi awal dan perlu ditinjau bersama dokumen ini.
+Input versi pertama mengikuti pembaruan percakapan: sumber video gameplay 3–5 menit dapat dibuka, lalu pengguna memilih satu rentang awal–akhir dan satu titik lucu untuk setiap hasil. Klip yang sudah dipotong tetap dapat digunakan. Pengelolaan banyak momen sekaligus dari satu rekaman belum termasuk versi pertama.
+
+Implementation plan dan mockup: [plan lengkap](../plans/2026-10-12-gaming-funny-moments-implementation.md), [mockup interaktif](../../mockups/editor.html). Dokumen tersebut merinci keputusan UI dan kontrak teknis; aplikasi produksi belum diimplementasikan.
 
 ## Alur pengguna
 
