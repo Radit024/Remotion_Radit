@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { guardMutation, assertUuid, apiErrorResponse, ApiError } from "@/server/guard";
 import { createJob, publicJob } from "@/server/jobs";
+import { aiConfig } from "@/server/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +14,13 @@ export async function POST(
     guardMutation(request);
     const { id } = await context.params;
     assertUuid(id, "id proyek");
+
+    if (!aiConfig().enabled) {
+      throw new ApiError(
+        "MODEL_UNSUPPORTED",
+        "Dukungan AI OpenRouter sedang dinonaktifkan sementara. Silakan tambahkan efek atau reaksi secara manual.",
+      );
+    }
 
     const body = (await request.json()) as { revision?: number };
     if (typeof body.revision !== "number" || !Number.isFinite(body.revision)) {

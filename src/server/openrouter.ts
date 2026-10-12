@@ -28,9 +28,18 @@ export class AiError extends ApiError {
 
 export function requireApiKey(): string {
   const config = aiConfig();
+  if (!config.enabled) {
+    throw new ApiError(
+      "MODEL_UNSUPPORTED",
+      "Dukungan AI OpenRouter sedang dinonaktifkan sementara. Gunakan input subtitle manual atau impor berkas SRT.",
+    );
+  }
   const key = process.env.OPENROUTER_API_KEY?.trim() ?? "";
   if (!key) {
-    throw new ApiError("API_KEY_MISSING", "OPENROUTER_API_KEY belum dikonfigurasi; transkripsi dan saran AI tidak tersedia");
+    throw new ApiError(
+      "API_KEY_MISSING",
+      "OPENROUTER_API_KEY belum dikonfigurasi; transkripsi dan saran AI tidak tersedia",
+    );
   }
   return key;
 }

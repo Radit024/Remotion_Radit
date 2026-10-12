@@ -4,6 +4,7 @@ import path from "node:path";
 export const projectRoot = process.cwd();
 
 export type AiConfig = {
+  enabled: boolean;
   apiKeyPresent: boolean;
   suggestionModel: string;
   transcriptionModel: string;
@@ -47,20 +48,29 @@ export function expectedHost(): string {
 }
 
 export function aiConfig(): AiConfig {
+  const enableEnv = readEnv("ENABLE_AI").toLowerCase();
+  const enabled = enableEnv === "true" || enableEnv === "1";
   const suggestionModel = readEnv("OPENROUTER_SUGGESTION_MODEL");
   const transcriptionModel = readEnv("OPENROUTER_TRANSCRIPTION_MODEL");
   const issues: string[] = [];
-  if (!readEnv("OPENROUTER_API_KEY")) {
-    issues.push("OPENROUTER_API_KEY belum diisi");
+
+  if (!enabled) {
+    issues.push("Dukungan AI OpenRouter dinonaktifkan sementara.");
+  } else {
+    if (!readEnv("OPENROUTER_API_KEY")) {
+      issues.push("OPENROUTER_API_KEY belum diisi");
+    }
+    if (!suggestionModel) {
+      issues.push("OPENROUTER_SUGGESTION_MODEL belum diisi");
+    }
+    if (!transcriptionModel) {
+      issues.push("OPENROUTER_TRANSCRIPTION_MODEL belum diisi");
+    }
   }
-  if (!suggestionModel) {
-    issues.push("OPENROUTER_SUGGESTION_MODEL belum diisi");
-  }
-  if (!transcriptionModel) {
-    issues.push("OPENROUTER_TRANSCRIPTION_MODEL belum diisi");
-  }
+
   return {
-    apiKeyPresent: Boolean(readEnv("OPENROUTER_API_KEY")),
+    enabled,
+    apiKeyPresent: enabled && Boolean(readEnv("OPENROUTER_API_KEY")),
     suggestionModel,
     transcriptionModel,
     transcriptionLanguage: readEnv("OPENROUTER_TRANSCRIPTION_LANGUAGE") || "id",

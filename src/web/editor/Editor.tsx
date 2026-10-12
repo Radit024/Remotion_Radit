@@ -213,7 +213,15 @@ export const Editor: React.FC = () => {
 
         {/* Center / Right Header Status */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-2 text-xs">
+            {health?.ai && !health.ai.enabled && (
+              <span
+                className="rounded border border-[#30383c] bg-[#111416] px-2 py-0.5 text-[11px] text-[#A9B4B1]"
+                title="Dukungan AI OpenRouter dinonaktifkan sementara"
+              >
+                AI Nonaktif
+              </span>
+            )}
             {isDirty ? (
               <span className="flex items-center gap-1 text-[#FFC879]">
                 <AlertCircle className="h-3.5 w-3.5" /> Belum Tersimpan
@@ -307,6 +315,7 @@ export const Editor: React.FC = () => {
                       isTranscribing={isTranscribing}
                       startFrame={draft.startFrame}
                       endFrame={draft.endFrame}
+                      aiEnabled={Boolean(health?.ai?.enabled)}
                     />
                   </TabsContent>
 
@@ -401,6 +410,7 @@ export const Editor: React.FC = () => {
                 onDismissSuggestion={handleDismissSuggestion}
                 onTriggerSuggestions={handleTriggerSuggestions}
                 isLoading={isSuggesting}
+                aiEnabled={Boolean(health?.ai?.enabled)}
               />
             </div>
           </div>

@@ -28,6 +28,47 @@ describe("OpenRouter AI integration and schema validation", () => {
     });
   });
 
+  describe("requireApiKey & AI disabled state", () => {
+    it("throws MODEL_UNSUPPORTED when AI is disabled", () => {
+      const prevEnable = process.env.ENABLE_AI;
+      delete process.env.ENABLE_AI;
+      try {
+        expect(() => requireApiKey()).toThrowError(/dinonaktifkan sementara/);
+      } finally {
+        if (prevEnable !== undefined) process.env.ENABLE_AI = prevEnable;
+      }
+    });
+
+    it("throws API_KEY_MISSING when AI is enabled but key is missing", () => {
+      const prevEnable = process.env.ENABLE_AI;
+      const prevKey = process.env.OPENROUTER_API_KEY;
+      process.env.ENABLE_AI = "true";
+      delete process.env.OPENROUTER_API_KEY;
+      try {
+        expect(() => requireApiKey()).toThrowError(/OPENROUTER_API_KEY belum dikonfigurasi/);
+      } finally {
+        if (prevEnable !== undefined) process.env.ENABLE_AI = prevEnable;
+        else delete process.env.ENABLE_AI;
+        if (prevKey !== undefined) process.env.OPENROUTER_API_KEY = prevKey;
+      }
+    });
+
+    it("returns key when AI is enabled and key is present", () => {
+      const prevEnable = process.env.ENABLE_AI;
+      const prevKey = process.env.OPENROUTER_API_KEY;
+      process.env.ENABLE_AI = "true";
+      process.env.OPENROUTER_API_KEY = "sk-or-test12345";
+      try {
+        expect(requireApiKey()).toBe("sk-or-test12345");
+      } finally {
+        if (prevEnable !== undefined) process.env.ENABLE_AI = prevEnable;
+        else delete process.env.ENABLE_AI;
+        if (prevKey !== undefined) process.env.OPENROUTER_API_KEY = prevKey;
+        else delete process.env.OPENROUTER_API_KEY;
+      }
+    });
+  });
+
   describe("validateSuggestions", () => {
     const editRange = { startFrame: 2400, endFrame: 3300 };
 

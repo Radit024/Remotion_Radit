@@ -13,6 +13,7 @@ type SuggestionPanelProps = {
   onDismissSuggestion: (id: string) => void;
   onTriggerSuggestions: () => void;
   isLoading: boolean;
+  aiEnabled?: boolean;
 };
 
 export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
@@ -21,6 +22,7 @@ export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
   onDismissSuggestion,
   onTriggerSuggestions,
   isLoading,
+  aiEnabled = false,
 }) => {
   const formatSec = (frame: number) => (frame / FPS).toFixed(2);
 
@@ -33,18 +35,29 @@ export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
           size="sm"
           variant="outline"
           onClick={onTriggerSuggestions}
-          disabled={isLoading}
-          className="border-[#D4F77C]/40 bg-[#111416] text-xs text-[#D4F77C] hover:bg-[#D4F77C]/10"
+          disabled={!aiEnabled || isLoading}
+          title={
+            aiEnabled
+              ? "Minta saran efek dan teks reaksi dari transkripsi"
+              : "Dukungan AI OpenRouter sedang dinonaktifkan sementara. Efek dapat ditambahkan manual melalui Preset dan Stiker."
+          }
+          className={`border-[#D4F77C]/40 bg-[#111416] text-xs ${
+            !aiEnabled
+              ? "cursor-not-allowed opacity-50 text-[#A9B4B1] border-[#30383c]"
+              : "text-[#D4F77C] hover:bg-[#D4F77C]/10"
+          }`}
         >
           <Sparkles className="mr-1 h-3.5 w-3.5" />
-          {isLoading ? "Menganalisis..." : "Minta Saran AI"}
+          {isLoading ? "Menganalisis..." : aiEnabled ? "Minta Saran AI" : "AI Nonaktif"}
         </Button>
       </div>
 
       <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pr-1">
         {suggestions.length === 0 ? (
           <div className="rounded border border-dashed border-[#30383c] p-4 text-center text-[#A9B4B1]">
-            Belum ada saran efek AI. Klik tombol di atas untuk menganalisis momen dan subtitle.
+            {!aiEnabled
+              ? "Dukungan AI OpenRouter dinonaktifkan sementara. Anda dapat mengatur preset efek zoom/shake dan menambahkan stiker/SFX secara langsung pada panel sebelah kiri."
+              : "Belum ada saran efek AI. Klik tombol di atas untuk menganalisis momen dan subtitle."}
           </div>
         ) : (
           suggestions.map((sug) => (

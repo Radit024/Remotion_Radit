@@ -42,6 +42,7 @@ export type HealthInfo = {
   status: string;
   ffmpeg: boolean;
   ai: {
+    enabled?: boolean;
     configured: boolean;
     suggestionModel: string;
     transcriptionModel: string;

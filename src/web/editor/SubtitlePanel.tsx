@@ -14,6 +14,7 @@ type SubtitlePanelProps = {
   isTranscribing: boolean;
   startFrame: number;
   endFrame: number;
+  aiEnabled?: boolean;
 };
 
 export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
@@ -23,6 +24,7 @@ export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
   isTranscribing,
   startFrame,
   endFrame,
+  aiEnabled = false,
 }) => {
   const [newText, setNewText] = useState("");
   const [newSpeaker, setNewSpeaker] = useState("");
@@ -91,11 +93,20 @@ export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
             size="sm"
             variant="outline"
             onClick={onTriggerAiTranscribe}
-            disabled={isTranscribing}
-            className="border-[#D4F77C]/40 bg-[#111416] text-xs text-[#D4F77C] hover:bg-[#D4F77C]/10"
+            disabled={!aiEnabled || isTranscribing}
+            title={
+              aiEnabled
+                ? "Minta transkripsi suara otomatis dari audio rentang terpilih"
+                : "Dukungan AI OpenRouter sedang dinonaktifkan sementara. Gunakan input manual atau tombol Impor SRT."
+            }
+            className={`border-[#D4F77C]/40 bg-[#111416] text-xs ${
+              !aiEnabled
+                ? "cursor-not-allowed opacity-50 text-[#A9B4B1] border-[#30383c]"
+                : "text-[#D4F77C] hover:bg-[#D4F77C]/10"
+            }`}
           >
             <Sparkles className="mr-1 h-3.5 w-3.5" />
-            {isTranscribing ? "Mentranskripsi..." : "AI STT"}
+            {isTranscribing ? "Mentranskripsi..." : aiEnabled ? "AI STT" : "AI STT (Nonaktif)"}
           </Button>
 
           <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-[#30383c] bg-[#111416] p-2 text-[#A9B4B1] hover:bg-[#30383c]">

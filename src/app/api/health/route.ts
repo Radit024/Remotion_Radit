@@ -26,6 +26,7 @@ export async function GET(request: Request) {
         status: "ok",
         ffmpeg: ffmpegOk,
         ai: {
+          enabled: ai.enabled,
           configured: ai.apiKeyPresent,
           suggestionModel: ai.suggestionModel,
           transcriptionModel: ai.transcriptionModel,
