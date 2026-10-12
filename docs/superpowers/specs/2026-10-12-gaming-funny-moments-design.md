@@ -5,7 +5,7 @@ Status: arah produk disetujui dalam percakapan; dokumen ini menunggu peninjauan 
 
 ## Tujuan dan keputusan
 
-Aplikasi lokal mengubah klip gameplay pilihan pengguna menjadi MP4 vertikal melalui Remotion. Pengguna memilih momen lucu; sistem menerapkan template, membantu membuat subtitle, dan mengusulkan teks reaksi serta efek. Pengguna meninjau edit sebelum render.
+Aplikasi web dengan render dan penyimpanan lokal mengubah klip gameplay pilihan pengguna menjadi MP4 vertikal melalui Remotion. Pengguna memilih momen lucu; sistem menerapkan template, membantu membuat subtitle, dan mengusulkan teks reaksi serta efek. Pengguna meninjau edit sebelum render.
 
 Keputusan dari percakapan: mendukung berbagai game, output Shorts/TikTok 9:16, dua preset (Subtitle + zoom ringan dan Meme ramai), serta alur AI membantu dengan template sebagai fondasi. Folder E:\Remotion kosong saat diperiksa, sehingga belum ada implementasi atau pola proyek yang perlu dipertahankan.
 
@@ -18,8 +18,8 @@ Implementation plan dan mockup: [plan lengkap](../plans/2026-10-12-gaming-funny-
 1. Pilih file gameplay lokal melalui pemilih file. Sistem memeriksa apakah video dapat dibaca dan menampilkan durasi serta preview.
 2. Tentukan awal, akhir, dan satu titik lucu di dalam rentang. Tombol mengambil posisi pemutar saat ini agar pengguna tidak perlu mengetik semua waktunya.
 3. Pilih preset, tata letak, dan judul singkat opsional. Tata letak awal mempertahankan seluruh gameplay di kanvas vertikal; crop vertikal tersedia dengan posisi fokus yang dapat disesuaikan.
-4. Jalankan transkripsi lokal. Hasil berupa segmen subtitle dengan waktu relatif terhadap klip sumber. Pengguna dapat mengubah teks dan waktu atau mengimpor SRT jika transkripsi tidak tersedia.
-5. Minta saran AI berdasarkan transkrip, preset, dan titik lucu. AI mengusulkan teks reaksi serta pilihan efek dari daftar yang didukung, bukan kode bebas. Pengguna dapat menerima atau menolak saran dan mengeditnya.
+4. Jalankan transkripsi melalui OpenRouter setelah UI menjelaskan pengiriman audio pilihan dan biaya. Hasil berupa segmen subtitle dengan waktu relatif terhadap klip sumber. Pengguna dapat mengubah teks dan waktu atau mengimpor SRT jika transkripsi tidak tersedia.
+5. Minta saran AI OpenRouter berdasarkan transkrip, preset, dan titik lucu. AI mengusulkan teks reaksi serta pilihan efek dari daftar yang didukung, bukan kode bebas. Pengguna dapat menerima atau menolak saran dan mengeditnya.
 6. Tinjau komposisi yang sama melalui Remotion Player. Rentang, subtitle, dan efek yang ditinjau menjadi input render.
 7. Render lokal, tampilkan progres atau kegagalan, lalu berikan tautan file MP4 baru untuk dibuka/diunduh. File sumber tetap utuh.
 
@@ -45,17 +45,17 @@ Kedua preset berbagi satu model edit dan satu komposisi; preset hanya menentukan
 
 ## Pembagian peran dan arsitektur
 
-Frontend React/TypeScript menyediakan pemutar sumber, kontrol rentang, pilihan preset, editor subtitle, tinjauan saran, dan Remotion Player. Backend Node lokal mengelola file, metadata, proses transkripsi, saran AI, dan pekerjaan render. Backend hanya mendengarkan loopback.
+Frontend Next.js App Router/React/TypeScript menyediakan pemutar sumber, kontrol rentang, pilihan preset, editor subtitle, tinjauan saran, dan Remotion Player. Next Route Handlers mengelola API/file/proyek dan mendaftarkan job; worker Node persisten menjalankan FFmpeg, panggilan OpenRouter, dan render dari snapshot. Next hanya bind loopback. shadcn Base UI/Tailwind, Lucide, Emoji Mart/Twemoji, Barlow/Barlow Condensed/IBM Plex Mono, serta Motion untuk UI mengikuti implementation plan.
 
 Model edit menyimpan identitas aset, rentang sumber, titik lucu, preset, tata letak, subtitle, dan efek yang telah diterima. Fungsi timeline menerjemahkan waktu sumber menjadi frame output, termasuk tambahan freeze/replay. Komposisi Remotion menggunakan timeline tersebut untuk preview dan render agar keduanya tidak mempunyai aturan timing terpisah.
 
-Transkripsi direncanakan memakai faster-whisper lokal melalui Python. Saran teks/efek direncanakan memakai Ollama lokal dengan model yang dipilih pengguna dari model yang sudah terpasang. Tidak ada panggilan layanan AI cloud dalam versi pertama. Instalasi runtime dan pengunduhan model dijelaskan saat implementasi setelah kemampuan perangkat diperiksa; aplikasi tidak memulai unduhan model diam-diam.
+Transkripsi dan saran edit memakai OpenRouter sebagai provider AI aplikasi. API key hanya server/worker, bukan browser. STT memakai model yang terbukti mendukung verbose_json/timestamp; saran efek memakai model dengan structured output dan validasi Zod. Audio rentang dan transcript untuk AI dikirim ke OpenRouter/provider, memerlukan internet serta dapat dikenai biaya. Video sumber, aset, proyek, dan render tetap lokal. Model lokal/Python bukan kebutuhan versi ini.
 
 Remotion menjalankan efek dan render; AI menghasilkan usulan data edit. Transkrip dan penanda waktu menjadi sumber saran, sehingga AI tidak mengklaim telah memahami gambar gameplay jika tidak menerima gambar.
 
 ## Perilaku saat AI tidak tersedia
 
-Backend memeriksa ketersediaan runtime transkripsi dan Ollama. Jika belum siap, UI menjelaskan komponen yang belum tersedia dan menyediakan input subtitle manual atau impor SRT. Template dan render tetap dapat digunakan. Saran template berbasis titik lucu diberi label sebagai template, bukan keluaran AI. Kegagalan AI tidak menghapus edit yang sudah dibuat pengguna.
+Backend memeriksa konfigurasi API key/model, worker, dan kegagalan jaringan/kredit/capability OpenRouter tanpa menjalankan inference otomatis. Jika belum siap, UI menjelaskan komponen yang belum tersedia dan menyediakan input subtitle manual atau impor SRT. Template dan render tetap dapat digunakan. Saran template berbasis titik lucu diberi label sebagai template, bukan keluaran AI. Kegagalan AI tidak menghapus edit yang sudah dibuat pengguna.
 
 ## Invarian dan batas kepercayaan
 
@@ -71,7 +71,7 @@ Backend memeriksa ketersediaan runtime transkripsi dan Ollama. Jika belum siap, 
 
 ## Penanganan kesalahan dan aksesibilitas
 
-Kesalahan media, subtitle, dependensi AI, dan render ditampilkan di tahap terkait dengan tindakan pemulihan yang jelas. Status tombol menunjukkan proses aktif dan mencegah klik ganda. Kontrol waktu mempunyai label, bisa digunakan dengan keyboard, dan kesalahan validasi tidak disampaikan melalui warna saja. Preview dapat dijeda; animasi UI mengikuti reduced motion. Efek di video dikendalikan melalui pilihan preset/efek.
+Kesalahan media, subtitle, konfigurasi/API AI, dan render ditampilkan di tahap terkait dengan tindakan pemulihan yang jelas. Status tombol menunjukkan proses aktif dan mencegah klik ganda. Kontrol waktu mempunyai label, bisa digunakan dengan keyboard, dan kesalahan validasi tidak disampaikan melalui warna saja. Preview dapat dijeda; animasi UI mengikuti reduced motion. Efek di video dikendalikan melalui pilihan preset/efek.
 
 ## Bukti yang diperlukan sebelum disebut selesai
 
@@ -80,7 +80,7 @@ Kesalahan media, subtitle, dependensi AI, dan render ditampilkan di tahap terkai
 3. Tes validasi menolak waktu tidak valid, path di luar aset terkelola, serta saran AI di luar skema.
 4. Uji satu klip contoh sintetis dengan audio melalui kedua preset; render MP4 nyata dan periksa dimensi, durasi, serta audio.
 5. Periksa UI melalui browser: input file, koreksi subtitle, perubahan preset/layout, preview, progres render, dan pesan dependensi AI yang belum tersedia.
-6. Uji transkripsi dan saran AI nyata jika runtime/model tersedia; jika tidak, laporkan bahwa integrasinya belum terverifikasi, tanpa menyebut sistem AI telah berfungsi penuh.
+6. Uji transkripsi dan saran AI nyata jika key/kredit/model tersedia dan aksi pengiriman dijalankan eksplisit; jika tidak, laporkan bahwa integrasinya belum terverifikasi, tanpa menyebut sistem AI telah berfungsi penuh.
 
 ## Urutan pengerjaan setelah peninjauan
 
