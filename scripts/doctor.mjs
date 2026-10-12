@@ -2,16 +2,16 @@ import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-const checks: Array<{ name: string; ok: boolean; detail: string }> = [];
+const checks = [];
 
-function version(cmd: string): string {
+function version(cmd) {
   const result = spawnSync(cmd, ["-version"], { encoding: "utf8", windowsHide: true });
   if (result.error || result.status !== 0) return "tidak tersedia";
   const line = (result.stdout || result.stderr || "").split("\n")[0];
   return line.trim();
 }
 
-function toolAvailable(cmd: string): boolean {
+function toolAvailable(cmd) {
   const result = spawnSync(cmd, ["-version"], { windowsHide: true });
   return !result.error && result.status === 0;
 }

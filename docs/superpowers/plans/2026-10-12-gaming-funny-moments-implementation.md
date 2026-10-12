@@ -284,9 +284,9 @@ Semua perintah shell memakai `rtk` sesuai `C:\Users\daffa\.codex\RTK.md`. Potong
 
 **Files:** create `package.json`, `package-lock.json`, `tsconfig.json`, `next.config.ts`, `postcss.config.mjs`, `components.json`, `vitest.config.ts`, `.gitignore`, `.env.example`, `scripts/doctor.mjs`, `src/app/layout.tsx`, `page.tsx`, `globals.css`, `src/worker/index.ts`, `src/server/env.ts`.
 
-- [ ] Periksa `rtk node --version`, `rtk npm --version`, `rtk ffmpeg -version`, `rtk ffprobe -version`. Jangan memasang transkripsi Python/model lokal.
-- [ ] Gunakan create-next-app dalam staging sibling/temporary directory, App Router/TypeScript/Tailwind, lalu pindahkan hanya scaffold yang diperiksa ke root; pertahankan `docs` dan `.git`. Jangan menjalankan scaffold destruktif terhadap direktori nonempty.
-- [ ] Paket utama setelah scaffold:
+- [x] Periksa `rtk node --version`, `rtk npm --version`, `rtk ffmpeg -version`, `rtk ffprobe -version`. Jangan memasang transkripsi Python/model lokal.
+- [x] Gunakan create-next-app dalam staging sibling/temporary directory, App Router/TypeScript/Tailwind, lalu pindahkan hanya scaffold yang diperiksa ke root; pertahankan `docs` dan `.git`. Jangan menjalankan scaffold destruktif terhadap direktori nonempty.
+- [x] Paket utama setelah scaffold:
 
 ```powershell
 rtk npm install remotion @remotion/player @remotion/bundler @remotion/renderer zod busboy lucide-react motion emoji-mart @emoji-mart/data @emoji-mart/react @twemoji/api @fontsource/barlow @fontsource/barlow-condensed @fontsource/ibm-plex-mono
@@ -295,8 +295,8 @@ rtk proxy npx shadcn@latest init
 rtk proxy npx shadcn@latest add button tabs dialog alert-dialog slider switch select popover tooltip progress scroll-area resizable input textarea badge
 ```
 
-- [ ] Pilih Base UI pada shadcn setup, mapping import `@/*` dan lokasi `src/components/ui`; jangan mencampur Radix/komponen duplikat. CLI flags/current API harus diperiksa sebelum eksekusi. Semua paket Remotion pin exact release yang sama dan commit lockfile.
-- [ ] Scripts:
+- [x] Pilih Base UI pada shadcn setup, mapping import `@/*` dan lokasi `src/components/ui`; jangan mencampur Radix/komponen duplikat. CLI flags/current API harus diperiksa sebelum eksekusi. Semua paket Remotion pin exact release yang sama dan commit lockfile.
+- [x] Scripts:
 
 ```json
 {"dev":"concurrently -k \"next dev --hostname 127.0.0.1 --port 3000\" \"tsx --env-file=.env.local src/worker/index.ts\"",
@@ -310,18 +310,18 @@ rtk proxy npx shadcn@latest add button tabs dialog alert-dialog slider switch se
  "verify:assets":"node scripts/verify-assets.mjs"}
 ```
 
-- [ ] `.env.local` dibuat pengguna dari example; tidak berisi key di Git. Example fields: `OPENROUTER_API_KEY`, `OPENROUTER_SUGGESTION_MODEL`, `OPENROUTER_TRANSCRIPTION_MODEL`. Tidak ada key berprefiks `NEXT_PUBLIC_`. Worker memuat env yang sama melalui Node env-file; Next membaca `.env.local` otomatis. Readiness mengecek configured/unconfigured tanpa memanggil API berbayar.
-- [ ] `.gitignore` mencakup `.next`, `node_modules`, `.data`, `.env*` kecuali `.env.example`, test outputs. `next.config.ts` mengexternal-kan paket renderer/bundler yang membutuhkan filesystem sesuai dukungan versi terpasang; jangan mengirim dependency renderer ke browser.
-- [ ] Layout/page menjadi Server Components; editor/Player/emoji picker menjadi Client Components. Props lintas boundary berupa DTO serializable saja. `error.tsx` memiliki error UI yang dapat dicoba ulang; `loading.tsx` tidak memblokir worker.
-- [ ] Fontsource menyediakan file font berlisensi; copy fixed weights ke `public/fonts` dengan manifest/hash/notices. Next UI memakai `next/font/local`, video memakai file sama melalui loader Remotion. Aset emoji static dibundle lokal; tidak fetch CDN saat render.
-- [ ] Run typecheck/build, expected exit0; worker idle dapat dihentikan bersih. Commit `chore: scaffold Next editor and persistent local worker`.
+- [x] `.env.local` dibuat pengguna dari example; tidak berisi key di Git. Example fields: `OPENROUTER_API_KEY`, `OPENROUTER_SUGGESTION_MODEL`, `OPENROUTER_TRANSCRIPTION_MODEL`. Tidak ada key berprefiks `NEXT_PUBLIC_`. Worker memuat env yang sama melalui Node env-file; Next membaca `.env.local` otomatis. Readiness mengecek configured/unconfigured tanpa memanggil API berbayar.
+- [x] `.gitignore` mencakup `.next`, `node_modules`, `.data`, `.env*` kecuali `.env.example`, test outputs. `next.config.ts` mengexternal-kan paket renderer/bundler yang membutuhkan filesystem sesuai dukungan versi terpasang; jangan mengirim dependency renderer ke browser.
+- [x] Layout/page menjadi Server Components; editor/Player/emoji picker menjadi Client Components. Props lintas boundary berupa DTO serializable saja. `error.tsx` memiliki error UI yang dapat dicoba ulang; `loading.tsx` tidak memblokir worker.
+- [x] Fontsource menyediakan file font berlisensi; copy fixed weights ke `public/fonts` dengan manifest/hash/notices. Next UI memakai `next/font/local`, video memakai file sama melalui loader Remotion. Aset emoji static dibundle lokal; tidak fetch CDN saat render.
+- [x] Run typecheck/build, expected exit0; worker idle dapat dihentikan bersih. Commit `chore: scaffold Next editor and persistent local worker`.
 
 
 ### Task 2 — Skema edit, preset, dan validasi
 
 **Files:** create `src/shared/edit.ts`, `presets.ts`, `suggestions.ts`, `tests/edit.test.ts`.
 
-- [ ] Tulis tes berikut sebelum validator. Export fungsi `validateEdit(edit, asset, relatedAssets)` dari `edit.ts`; kembalikan parsed Edit atau throw validation error.
+- [x] Tulis tes berikut sebelum validator. Export fungsi `validateEdit(edit, asset, relatedAssets)` dari `edit.ts`; kembalikan parsed Edit atau throw validation error.
 
 ```ts
 import {expect, test} from 'vitest';
@@ -343,16 +343,16 @@ test('rejects nonexistent meme asset',()=>{
 });
 ```
 
-- [ ] `rtk npm test -- tests/edit.test.ts`: expected fail until validator exists.
-- [ ] Implement Zod strict objects from section 4: finite integer frames, nonempty bounded IDs, name ≤120 chars, caption ≤160 chars, reaction ≤80 chars, normalized focus 0..1, captionY .15.. .82, freeze 0..60, replay 0..90, zoom strength 1..1.5, shake ≤12 px; at most 600 captions and 100 effects. Reject unknown keys. Refine source range against metadata and asset type against relatedAssets. Enforce caption start < end and effect start < end.
-- [ ] Add `makePresetEffects(preset, momentFrame, startFrame, endFrame)` which clips its window to selected range. It generates no reaction text or arbitrary assets. Preset default changes require explicit UI action when existing effects differ.
-- [ ] Rerun tests; expected pass. Commit `feat: define validated editing contract`.
+- [x] `rtk npm test -- tests/edit.test.ts`: expected fail until validator exists.
+- [x] Implement Zod strict objects from section 4: finite integer frames, nonempty bounded IDs, name ≤120 chars, caption ≤160 chars, reaction ≤80 chars, normalized focus 0..1, captionY .15.. .82, freeze 0..60, replay 0..90, zoom strength 1..1.5, shake ≤12 px; at most 600 captions and 100 effects. Reject unknown keys. Refine source range against metadata and asset type against relatedAssets. Enforce caption start < end and effect start < end.
+- [x] Add `makePresetEffects(preset, momentFrame, startFrame, endFrame)` which clips its window to selected range. It generates no reaction text or arbitrary assets. Preset default changes require explicit UI action when existing effects differ.
+- [x] Rerun tests; expected pass. Commit `feat: define validated editing contract`.
 
 ### Task 3 — Compiler timeline sebagai sumber kebenaran
 
 **Files:** create `src/shared/timeline.ts`, `tests/timeline.test.ts`; modify `edit.ts` if typed compiler result needed.
 
-- [ ] Tulis tes real mapping berikut; export `compileEdit(Edit):CompiledEdit` dan `sourceFrameAt(CompiledEdit,outputFrame):number`.
+- [x] Tulis tes real mapping berikut; export `compileEdit(Edit):CompiledEdit` dan `sourceFrameAt(CompiledEdit,outputFrame):number`.
 
 ```ts
 import {expect,test} from 'vitest';
@@ -379,18 +379,18 @@ test('no insertions maps first/last frame exactly',()=>{
 });
 ```
 
-- [ ] Run failing test, then implement `buildSegments` from section 4 and interval intersection mapping. `sourceFrameAt` finds half-open output interval, returns freeze sourceStart or sourceStart+offset; invalid output frame throws.
-- [ ] Add boundary cases: moment at start, moment=end-1, replay shorter near end, captions crossing cuts, source without audio, disabled effects. Assert segment continuity and sum durations with seeded generated valid ranges.
-- [ ] Run `rtk npm test -- tests/timeline.test.ts`; expected pass. Commit `feat: compile source edits into one output timeline`.
+- [x] Run failing test, then implement `buildSegments` from section 4 and interval intersection mapping. `sourceFrameAt` finds half-open output interval, returns freeze sourceStart or sourceStart+offset; invalid output frame throws.
+- [x] Add boundary cases: moment at start, moment=end-1, replay shorter near end, captions crossing cuts, source without audio, disabled effects. Assert segment continuity and sum durations with seeded generated valid ranges.
+- [x] Run `rtk npm test -- tests/timeline.test.ts`; expected pass. Commit `feat: compile source edits into one output timeline`.
 
 ### Task 4 — Local trust boundary, media import, and streaming
 
 **Files:** create `src/server/guard.ts`, `storage.ts`, `process.ts`, `media.ts`, `assets.ts`, `src/app/api/assets/route.ts`, `tests/security.test.ts`.
 
-- [ ] Tests assert unexpected Host, cross-site Origin mutation, `../` ID, invalid UUID, oversized upload, fake MIME, and invalid Range are rejected; valid same-origin upload returns managed Asset.
-- [ ] Validate Host against `127.0.0.1:3000` dan Origin yang sama pada Route Handlers. Tidak percaya forwarded headers dari klien; deployment hanya loopback pada versi pertama. Mutations require allowed Origin plus JSON or multipart content type. CORS does not use wildcard. Reject cross-site Fetch Metadata. Bind to loopback; localhost tools cannot execute arbitrary shell commands.
-- [ ] Gunakan Busboy dengan stream Node dari `Readable.fromWeb(request.body)` untuk menulis file ke staging, limit2GiB, tepat satu file, bounded fields, filename UUID. Jangan `request.formData()`/`arrayBuffer()` untuk memuat video2GiB ke RAM dan jangan gunakan Server Action untuk upload besar. Detect truncated limit and remove only known staging file inside `.data/tmp`. Probe media with FFprobe, not extension/MIME alone. Filenames are display text, never shell strings or storage paths.
-- [ ] Use this process pattern, with caller-provided fixed arguments and trusted executable names only:
+- [x] Tests assert unexpected Host, cross-site Origin mutation, `../` ID, invalid UUID, oversized upload, fake MIME, and invalid Range are rejected; valid same-origin upload returns managed Asset.
+- [x] Validate Host against `127.0.0.1:3000` dan Origin yang sama pada Route Handlers. Tidak percaya forwarded headers dari klien; deployment hanya loopback pada versi pertama. Mutations require allowed Origin plus JSON or multipart content type. CORS does not use wildcard. Reject cross-site Fetch Metadata. Bind to loopback; localhost tools cannot execute arbitrary shell commands.
+- [x] Gunakan Busboy dengan stream Node dari `Readable.fromWeb(request.body)` untuk menulis file ke staging, limit2GiB, tepat satu file, bounded fields, filename UUID. Jangan `request.formData()`/`arrayBuffer()` untuk memuat video2GiB ke RAM dan jangan gunakan Server Action untuk upload besar. Detect truncated limit and remove only known staging file inside `.data/tmp`. Probe media with FFprobe, not extension/MIME alone. Filenames are display text, never shell strings or storage paths.
+- [x] Use this process pattern, with caller-provided fixed arguments and trusted executable names only:
 
 ```ts
 import {spawn} from 'node:child_process';
@@ -400,28 +400,28 @@ export function spawnTool(command: string, args: string[]) {
 }
 ```
 
-- [ ] `runTool` wraps it with bounded stdout/stderr, timeout, AbortSignal, exit checks, and child-tree cancellation on Windows. Never log private transcripts or full local paths by default.
-- [ ] FFprobe args `-v error -show_format -show_streams -of json <managedPath>`; duration finite positive; reject media with no video for video import. Images limited 25 MiB and decoded dimension ≤8192; audio ≤100 MiB and valid audio stream. Reject SVG/HTML/script inputs as meme assets.
-- [ ] Media IDs map through manifest lookup, not user path joins. Stream Range with validated single interval, Content-Type from probe, Content-Length, Accept-Ranges, and safe Content-Disposition. Reject multiple ranges in first version.
-- [ ] On unsupported browser codec, preserve original and create local preview proxy: H.264 yuv420p/AAC with max 1280 px longest side, native timestamps, faststart. A lower-quality preview proxy must not become final-render source. Final render uses original only if renderer can decode it; otherwise explicit full-quality normalized intermediate. Maintain source duration/frame alignment across proxies.
-- [ ] Route media mengembalikan Web ReadableStream dengan no-store; Route Handlers params di-await dan runtime Node. API integration tests memakai server Next nyata pada port tes yang diizinkan dan temp data root. Upload besar diuji melalui chunk-stream dengan batas memori terukur.
-- [ ] Run `rtk npm test -- tests/security.test.ts`; expected all rejection/streaming cases pass. Commit `feat: import and serve managed local media safely`.
+- [x] `runTool` wraps it with bounded stdout/stderr, timeout, AbortSignal, exit checks, and child-tree cancellation on Windows. Never log private transcripts or full local paths by default.
+- [x] FFprobe args `-v error -show_format -show_streams -of json <managedPath>`; duration finite positive; reject media with no video for video import. Images limited 25 MiB and decoded dimension ≤8192; audio ≤100 MiB and valid audio stream. Reject SVG/HTML/script inputs as meme assets.
+- [x] Media IDs map through manifest lookup, not user path joins. Stream Range with validated single interval, Content-Type from probe, Content-Length, Accept-Ranges, and safe Content-Disposition. Reject multiple ranges in first version.
+- [x] On unsupported browser codec, preserve original and create local preview proxy: H.264 yuv420p/AAC with max 1280 px longest side, native timestamps, faststart. A lower-quality preview proxy must not become final-render source. Final render uses original only if renderer can decode it; otherwise explicit full-quality normalized intermediate. Maintain source duration/frame alignment across proxies.
+- [x] Route media mengembalikan Web ReadableStream dengan no-store; Route Handlers params di-await dan runtime Node. API integration tests memakai server Next nyata pada port tes yang diizinkan dan temp data root. Upload besar diuji melalui chunk-stream dengan batas memori terukur.
+- [x] Run `rtk npm test -- tests/security.test.ts`; expected all rejection/streaming cases pass. Commit `feat: import and serve managed local media safely`.
 
 ### Task 5 — Proyek lokal dan save concurrency
 
 **Files:** create `src/server/projects.ts`, `tests/projects.test.ts`; extend `storage.ts`.
 
-- [ ] Test that source import + create project survives restart, two concurrent saves with revision 1 yield exactly one revision 2 and one 409, malformed stored JSON returns readable error, rename failure preserves previous file.
-- [ ] Store project `${uuid}.json` with strict Edit; metadata manifests separately. Lock per project around read revision, validate, stage, and rename. Temp name UUID in same directory. Gunakan lockfile filesystem eksklusif yang dibagikan Next dan worker; cek revision di dalam lock. Tidak cukup memakai singleton Map yang dapat berbeda antar module/worker atau hot reload. Stale lock hanya dilepas setelah PID pemilik terbukti mati; jangan paksa melepas lock proses aktif.
-- [ ] GET list returns ID/name/updatedAt/source name only. PUT requires `If-Match`; return revision 2 with persisted content. No automatic deletion endpoints in first version.
-- [ ] Run `rtk npm test -- tests/projects.test.ts`; expected pass. Commit `feat: persist versioned local projects`.
+- [x] Test that source import + create project survives restart, two concurrent saves with revision 1 yield exactly one revision 2 and one 409, malformed stored JSON returns readable error, rename failure preserves previous file.
+- [x] Store project `${uuid}.json` with strict Edit; metadata manifests separately. Lock per project around read revision, validate, stage, and rename. Temp name UUID in same directory. Gunakan lockfile filesystem eksklusif yang dibagikan Next dan worker; cek revision di dalam lock. Tidak cukup memakai singleton Map yang dapat berbeda antar module/worker atau hot reload. Stale lock hanya dilepas setelah PID pemilik terbukti mati; jangan paksa melepas lock proses aktif.
+- [x] GET list returns ID/name/updatedAt/source name only. PUT requires `If-Match`; return revision 2 with persisted content. No automatic deletion endpoints in first version.
+- [x] Run `rtk npm test -- tests/projects.test.ts`; expected pass. Commit `feat: persist versioned local projects`.
 
 ### Task 6 — Remotion composition dan local render smoke
 
 **Files:** create `src/video/index.ts`, `Root.tsx`, `FunnyMoment.tsx`, `VideoSegment.tsx`, `CaptionLayer.tsx`, `EffectLayer.tsx`, `AudioLayer.tsx`, `scripts/create-fixture.mjs`, `scripts/smoke-render.mjs`, `tests/render.integration.test.ts`.
 
-- [ ] Create synthetic fixture with FFmpeg lavfi: 300 seconds, 1280×720, 30fps, colored timecoded pattern and 440 Hz audio. Add 1-second distinct tone near point 98.4s for sync verification; no real user footage committed. Store fixture under `.data/tmp`.
-- [ ] Register composition with dynamic duration from `compileEdit`:
+- [x] Create synthetic fixture with FFmpeg lavfi: 300 seconds, 1280×720, 30fps, colored timecoded pattern and 440 Hz audio. Add 1-second distinct tone near point 98.4s for sync verification; no real user footage committed. Store fixture under `.data/tmp`.
+- [x] Register composition with dynamic duration from `compileEdit`:
 
 ```tsx
 import React from 'react';
@@ -437,53 +437,53 @@ registerRoot(Root);
 
 `VideoProps` is `{edit:Edit,sourceUrl:string,assetUrls:Record<string,string>}`; validate before composition. Root reads validated inputProps supplied by the backend/smoke runner; an empty Studio entry must show an instructional composition rather than dereferencing an absent edit. Separate registration (`index.ts`) from Root export so web importing composition does not call registerRoot.
 
-- [ ] Each segment uses `Sequence from={outputStart} durationInFrames={durationFrames}`. Original/replay Video component uses source trim in composition frame units. Freeze uses `<Freeze frame={0}>` around a video trimmed at sourceStart and muted. Use the current pinned Remotion component API; check installed type signatures before coding, do not mix deprecated props.
-- [ ] Keep source audio in exactly one layer; blur background video always muted. Freeze segment muted. SFX tracks use managed asset URLs and bounded volume. Preview and render import same FunnyMoment.
-- [ ] Draw contain/crop using shared focusX/Y; deterministic zoom interpolation; shake from fixed frame-based sine function, never Math.random per frame. Reaction uses text nodes; no innerHTML. Caption text wraps to max two lines in safe area with measured font and accessible editor adjustment. Export excludes safe-area guides.
-- [ ] Renderer smoke uses `bundle` once, `selectComposition({id:'FunnyMoment',inputProps})`, then `renderMedia({codec:'h264',audioCodec:'aac',crf:18,pixelFormat:'yuv420p',composition,inputProps,serveUrl,outputLocation})`. Start concurrency 2 and benchmark before increasing; do not promise GPU hardware encoding.
-- [ ] Run `rtk npm run fixture`, then `rtk npm run smoke:render`. FFprobe output asserts 1080×1920, fps 30, H.264, AAC, 30.0s light and 31.6s meme when freeze12/replay36 enabled. Inspect selected first/moment/replay/last frames and listen to audio interruption/replay. Commit `feat: render both presets from shared composition`.
+- [x] Each segment uses `Sequence from={outputStart} durationInFrames={durationFrames}`. Original/replay Video component uses source trim in composition frame units. Freeze uses `<Freeze frame={0}>` around a video trimmed at sourceStart and muted. Use the current pinned Remotion component API; check installed type signatures before coding, do not mix deprecated props.
+- [x] Keep source audio in exactly one layer; blur background video always muted. Freeze segment muted. SFX tracks use managed asset URLs and bounded volume. Preview and render import same FunnyMoment.
+- [x] Draw contain/crop using shared focusX/Y; deterministic zoom interpolation; shake from fixed frame-based sine function, never Math.random per frame. Reaction uses text nodes; no innerHTML. Caption text wraps to max two lines in safe area with measured font and accessible editor adjustment. Export excludes safe-area guides.
+- [x] Renderer smoke uses `bundle` once, `selectComposition({id:'FunnyMoment',inputProps})`, then `renderMedia({codec:'h264',audioCodec:'aac',crf:18,pixelFormat:'yuv420p',composition,inputProps,serveUrl,outputLocation})`. Start concurrency 2 and benchmark before increasing; do not promise GPU hardware encoding.
+- [x] Run `rtk npm run fixture`, then `rtk npm run smoke:render`. FFprobe output asserts 1080×1920, fps 30, H.264, AAC, 30.0s light and 31.6s meme when freeze12/replay36 enabled. Inspect selected first/moment/replay/last frames and listen to audio interruption/replay. Commit `feat: render both presets from shared composition`.
 
 ### Task 7 — Job lifecycle, render snapshot, cancel, recovery
 
 **Files:** create `src/server/jobs.ts`, `render.ts`, `src/worker/index.ts`, `tests/jobs.test.ts`; create render/job/cancel Route Handlers yang tercantum di struktur file.
 
-- [ ] Test duplicate render requests reuse active job, another heavy job yields BUSY, revision mutation after start does not change snapshot, cancelled output is not downloadable, restart marks running jobs interrupted.
-- [ ] Save a deep immutable edit snapshot and revision in job JSON before work begins. Job ID determines output and temp names. Backend owns statuses; frontend cannot set success or outputPath.
-- [ ] Bundle cache invalidated by source/version changes; run worker with fixed FFmpeg/runtime dependencies. Forward progress from renderer only; use its cancellation API where available. Cancel child processes and polling cleanly, then delete only that job's managed partial output after process closure.
-- [ ] Atomic rename final MP4 after renderer success and probe verification. `/api/outputs/:id` verifies succeeded job and mapped output, never serves partial file. Preserve failed job diagnostic code without raw stack exposure.
-- [ ] Poll while UI has running jobs every 1s; stop on terminal state/unmount. On restart discover persisted jobs and preserve finished outputs. Commit `feat: coordinate recoverable local render jobs`.
+- [x] Test duplicate render requests reuse active job, another heavy job yields BUSY, revision mutation after start does not change snapshot, cancelled output is not downloadable, restart marks running jobs interrupted.
+- [x] Save a deep immutable edit snapshot and revision in job JSON before work begins. Job ID determines output and temp names. Backend owns statuses; frontend cannot set success or outputPath.
+- [x] Bundle cache invalidated by source/version changes; run worker with fixed FFmpeg/runtime dependencies. Forward progress from renderer only; use its cancellation API where available. Cancel child processes and polling cleanly, then delete only that job's managed partial output after process closure.
+- [x] Atomic rename final MP4 after renderer success and probe verification. `/api/outputs/:id` verifies succeeded job and mapped output, never serves partial file. Preserve failed job diagnostic code without raw stack exposure.
+- [x] Poll while UI has running jobs every 1s; stop on terminal state/unmount. On restart discover persisted jobs and preserve finished outputs. Commit `feat: coordinate recoverable local render jobs`.
 
 ### Task 8 — Frontend shell, source range, and project controls
 
 **Files:** create `src/app/page.tsx`, `layout.tsx`, `globals.css`, `error.tsx`, `src/web/api.ts`, `editor/Editor.tsx`, `SourcePlayer.tsx`, `RangeControls.tsx`, `useProject.ts`, `tests/editor.test.tsx`.
 
-- [ ] Translate mockup ke semantic Next Client Components dengan shadcn Base UI, Tailwind tokens, dan Lucide; retain responsive rules. Remotion Player dimuat client-side; jika SSR-nya bermasalah, dynamic import dengan ssr:false hanya dari Client Component. Emoji Mart lazy-load pada Popover, termasuk data lokal. Do not copy simulated script or hardcoded success into production UI. Create project picker, empty state, local upload, actual filename and metadata.
-- [ ] SourcePlayer uses browser video, supports keyboard seek, and emits `currentTime`. Buttons Ambil awal/Ambil akhir/Tandai update draft canonical frame values. Numeric timestamp inputs offer precise control; selecting a point outside range produces clear validation, not silent movement.
-- [ ] useProject owns draft, persisted revision, dirty, save state and server errors. A 409 prompts reload/copy draft; no automatic overwrite. Render first awaits successful save, then starts job for returned revision.
-- [ ] API client uses relative `/api`, parses structured errors, AbortController for requests, and aborts polling on unmount. No external network URLs in user inputs.
-- [ ] Editor test: source duration 252s, chosen [80,110), moment98.4 produces frames2400/3300/2952; invalid end disables Render. Failed save prevents render POST.
-- [ ] Run `rtk npm test -- tests/editor.test.tsx`, `rtk npm run typecheck`. Commit `feat: edit one selected moment in local web UI`.
+- [x] Translate mockup ke semantic Next Client Components dengan shadcn Base UI, Tailwind tokens, dan Lucide; retain responsive rules. Remotion Player dimuat client-side; jika SSR-nya bermasalah, dynamic import dengan ssr:false hanya dari Client Component. Emoji Mart lazy-load pada Popover, termasuk data lokal. Do not copy simulated script or hardcoded success into production UI. Create project picker, empty state, local upload, actual filename and metadata.
+- [x] SourcePlayer uses browser video, supports keyboard seek, and emits `currentTime`. Buttons Ambil awal/Ambil akhir/Tandai update draft canonical frame values. Numeric timestamp inputs offer precise control; selecting a point outside range produces clear validation, not silent movement.
+- [x] useProject owns draft, persisted revision, dirty, save state and server errors. A 409 prompts reload/copy draft; no automatic overwrite. Render first awaits successful save, then starts job for returned revision.
+- [x] API client uses relative `/api`, parses structured errors, AbortController for requests, and aborts polling on unmount. No external network URLs in user inputs.
+- [x] Editor test: source duration 252s, chosen [80,110), moment98.4 produces frames2400/3300/2952; invalid end disables Render. Failed save prevents render POST.
+- [x] Run `rtk npm test -- tests/editor.test.tsx`, `rtk npm run typecheck`. Commit `feat: edit one selected moment in local web UI`.
 
 ### Task 9 — Preview, timeline, presets, caption/SRT editing, assets
 
 **Files:** create `OutputPreview.tsx`, `OutputTimeline.tsx`, `PresetPanel.tsx`, `SubtitlePanel.tsx`, `AssetPanel.tsx`, `EmojiPicker.tsx`, `src/video/EmojiLayer.tsx`, `load-fonts.ts`; modify editor/timeline tests dan asset manifest.
 
-- [ ] OutputPreview receives `VideoProps` used by render and mounts Remotion Player with compiler duration. Source and output tabs have independent time positions; selected mode is announced through tab roles.
-- [ ] Timeline displays compiled output intervals (not raw source times) and source/output tooltips. One point marker identifies start of freeze and actual event frame when different. Click caption/effect selects existing item; no arbitrary layer editor needed.
-- [ ] Implement preset select with explicit apply-defaults action preserving captions/custom assets. Controls include freeze/replay toggles, bounded zoom/shake, contain/crop, normalized focus controls, caption position, and safe-guide preview toggle.
-- [ ] Subtitle editor supports add/update/delete segment, speaker label, text, timestamps; source canonical frame domain displayed explicitly. Import SRT locally as text, parse timestamps with milliseconds, reject invalid overlaps if simultaneous cues cannot fit, clip cues outside selection with a count/message. Offer time base choice Source or Selected clip for imported SRT; selected-clip times offset by startFrame. Export SRT reflects selected source range before inserted effects, labelled accordingly.
-- [ ] Emoji Mart memilih Unicode grapheme; Twemoji trusted SVG/PNG lokal memakai manifest yang sama di UI/video. Test skin tone, ZWJ family, flags, variation selectors, dan emoji yang tidak tersedia; tidak memakai innerHTML parser. Pastikan dataset picker dan Twemoji kompatibel walau Unicode version berbeda. Kredit graphicsCC BY4.0 dan fontOFL ikut NOTICE/credit output yang sesuai.
-- [ ] Motion for React hanya pada shell: dialog180ms, panel120–160ms, apply feedback160ms; reduced motion mematikan bounce/pergeseran besar. Video tetap useCurrentFrame; Noto + @remotion/lottie opsional, bukan paket wajib atau upload JSON arbitrer.
-- [ ] Meme image/audio uploads use assets route and require supported type. Pick stored assets for effect entry, display volume/duration; default has no unlicensed stock meme.
-- [ ] Test manual corrections persist through preset change and preview uses edited text; imported SRT offset by startFrame; unknown asset rejected. Browser check desktop 1440, laptop1366×768, mobile390px; no horizontal overflow. Commit `feat: preview and refine captions presets and assets`.
+- [x] OutputPreview receives `VideoProps` used by render and mounts Remotion Player with compiler duration. Source and output tabs have independent time positions; selected mode is announced through tab roles.
+- [x] Timeline displays compiled output intervals (not raw source times) and source/output tooltips. One point marker identifies start of freeze and actual event frame when different. Click caption/effect selects existing item; no arbitrary layer editor needed.
+- [x] Implement preset select with explicit apply-defaults action preserving captions/custom assets. Controls include freeze/replay toggles, bounded zoom/shake, contain/crop, normalized focus controls, caption position, and safe-guide preview toggle.
+- [x] Subtitle editor supports add/update/delete segment, speaker label, text, timestamps; source canonical frame domain displayed explicitly. Import SRT locally as text, parse timestamps with milliseconds, reject invalid overlaps if simultaneous cues cannot fit, clip cues outside selection with a count/message. Offer time base choice Source or Selected clip for imported SRT; selected-clip times offset by startFrame. Export SRT reflects selected source range before inserted effects, labelled accordingly.
+- [x] Emoji Mart memilih Unicode grapheme; Twemoji trusted SVG/PNG lokal memakai manifest yang sama di UI/video. Test skin tone, ZWJ family, flags, variation selectors, dan emoji yang tidak tersedia; tidak memakai innerHTML parser. Pastikan dataset picker dan Twemoji kompatibel walau Unicode version berbeda. Kredit graphicsCC BY4.0 dan fontOFL ikut NOTICE/credit output yang sesuai.
+- [x] Motion for React hanya pada shell: dialog180ms, panel120–160ms, apply feedback160ms; reduced motion mematikan bounce/pergeseran besar. Video tetap useCurrentFrame; Noto + @remotion/lottie opsional, bukan paket wajib atau upload JSON arbitrer.
+- [x] Meme image/audio uploads use assets route and require supported type. Pick stored assets for effect entry, display volume/duration; default has no unlicensed stock meme.
+- [x] Test manual corrections persist through preset change and preview uses edited text; imported SRT offset by startFrame; unknown asset rejected. Browser check desktop 1440, laptop1366×768, mobile390px; no horizontal overflow. Commit `feat: preview and refine captions presets and assets`.
 
 ### Task 10 — Transkripsi lewat OpenRouter speech-to-text
 
 **Files:** create `src/server/openrouter.ts`, `transcribe.ts`, `env.ts`, `tests/ai.test.ts`, `docs/SETUP.md`; extend worker/jobs dan transcribe Route Handler.
 
-- [ ] Model dipilih dari `GET /api/v1/models?output_modalities=transcription`; validasi model slug yang dikonfigurasi dan capability endpoint. Jangan memakai model chat biasa untuk mengarang timestamp. Uji dukungan `verbose_json` dan segment/word timestamps pada model/provider nyata sebelum mengaktifkan subtitle otomatis.
-- [ ] Worker mengekstrak hanya selected range sebagai mono16kHz WAV lewat FFmpeg. Split menjadi chunk maksimal30detik untuk mengurangi timeout/ukuran, with optional small overlap yang dideduplikasi berdasarkan timestamp+teks. Jangan mengirim rekaman sumber penuh atau filepath lokal.
-- [ ] Panggil endpoint resmi STT melalui server/worker dengan payload berikut; model berasal env server, bukan request klien:
+- [x] Model dipilih dari `GET /api/v1/models?output_modalities=transcription`; validasi model slug yang dikonfigurasi dan capability endpoint. Jangan memakai model chat biasa untuk mengarang timestamp. Uji dukungan `verbose_json` dan segment/word timestamps pada model/provider nyata sebelum mengaktifkan subtitle otomatis.
+- [x] Worker mengekstrak hanya selected range sebagai mono16kHz WAV lewat FFmpeg. Split menjadi chunk maksimal30detik untuk mengurangi timeout/ukuran, with optional small overlap yang dideduplikasi berdasarkan timestamp+teks. Jangan mengirim rekaman sumber penuh atau filepath lokal.
+- [x] Panggil endpoint resmi STT melalui server/worker dengan payload berikut; model berasal env server, bukan request klien:
 
 ```ts
 const payload = {
@@ -501,18 +501,18 @@ const response = await fetch('https://openrouter.ai/api/v1/audio/transcriptions'
 
 `audioBytes:Buffer` dan `signal:AbortSignal` berasal proses job; env divalidasi nonempty sebelum kode ini. Beri limit bytes/chunk dan baca response dengan cap; non2xx harus dimapping, tidak diperlakukan sebagai transcript.
 
-- [ ] Validasi segment finite seconds/start<end, bounded text/list, within chunk duration. Normalisasi returned chunk-relative seconds → source frames dengan chunk offset+startFrame. Word timestamps opsional; segment timestamps wajib untuk auto timed-caption. Jika model hanya mengembalikan text, tampilkan TRANSCRIPT_TIMESTAMPS_UNAVAILABLE dan tawarkan teks tanpa timing untuk koreksi/manual, bukan cue yang dibagi rata tanpa label.
-- [ ] Data egress UI: selected audio dikirim ke OpenRouter/provider yang melayani model; ada jaringan/biaya, bukan AI offline. Panggilan hanya melalui klik Transkripsi. Jangan menyimpan base64/audio request di log. Tidak mengklaim ZDR/privacy yang belum dikonfigurasi; bila memakai policyZDR, cek availability dan gagal jelas, jangan melonggarkan otomatis.
-- [ ] Batalkan request dengan AbortController; cancellation tidak menjamin upstream berhenti menagih request yang telah diterima. Simpan result sebagai proposal; revisi draft baru tidak ditimpa. Distinguish NO_AUDIO, API_KEY_MISSING, API_AUTH_FAILED, API_PAYMENT_REQUIRED, API_RATE_LIMITED, MODEL_UNSUPPORTED dan NETWORK_ERROR.
-- [ ] Tests: mock HTTP error401/402/429, invalid timestamps, text-only response, malformed payload, chunk offsets, silence, stale revision, cancellation, response cap. Live smoke memakai audio contoh nonpribadi melalui tombol eksplisit; inspect akurasi Indonesia/timing, simpan modelID/provider/usage, no diarization claim. Commit `feat: generate reviewable subtitles through OpenRouter`.
+- [x] Validasi segment finite seconds/start<end, bounded text/list, within chunk duration. Normalisasi returned chunk-relative seconds → source frames dengan chunk offset+startFrame. Word timestamps opsional; segment timestamps wajib untuk auto timed-caption. Jika model hanya mengembalikan text, tampilkan TRANSCRIPT_TIMESTAMPS_UNAVAILABLE dan tawarkan teks tanpa timing untuk koreksi/manual, bukan cue yang dibagi rata tanpa label.
+- [x] Data egress UI: selected audio dikirim ke OpenRouter/provider yang melayani model; ada jaringan/biaya, bukan AI offline. Panggilan hanya melalui klik Transkripsi. Jangan menyimpan base64/audio request di log. Tidak mengklaim ZDR/privacy yang belum dikonfigurasi; bila memakai policyZDR, cek availability dan gagal jelas, jangan melonggarkan otomatis.
+- [x] Batalkan request dengan AbortController; cancellation tidak menjamin upstream berhenti menagih request yang telah diterima. Simpan result sebagai proposal; revisi draft baru tidak ditimpa. Distinguish NO_AUDIO, API_KEY_MISSING, API_AUTH_FAILED, API_PAYMENT_REQUIRED, API_RATE_LIMITED, MODEL_UNSUPPORTED dan NETWORK_ERROR.
+- [x] Tests: mock HTTP error401/402/429, invalid timestamps, text-only response, malformed payload, chunk offsets, silence, stale revision, cancellation, response cap. Live smoke memakai audio contoh nonpribadi melalui tombol eksplisit; inspect akurasi Indonesia/timing, simpan modelID/provider/usage, no diarization claim. Commit `feat: generate reviewable subtitles through OpenRouter`.
 
 ### Task 11 — Structured suggestions OpenRouter dan review
 
 **Files:** extend `src/server/openrouter.ts`, `src/shared/suggestions.ts`, create `SuggestionPanel.tsx`, extend `tests/ai.test.ts`.
 
-- [ ] Server allowlists `OPENROUTER_SUGGESTION_MODEL` setelah membaca model/endpoint capability. Set `provider.require_parameters:true` dan `response_format.type:json_schema` untuk endpoint compatible. Dukungan strict JSON bervariasi; local Zod validation selalu wajib. Model choice/pricing/capability diverifikasi live, tidak mengunci aliaslatest yang bisa mengubah perilaku tanpa review.
-- [ ] JSON schema adalah object `{suggestions:[...]}` max5, item strict `{id,kind:'zoom'|'shake'|'reaction',startFrame,endFrame,text,strength,reason}`, required all keys, additionalProperties:false. Source frames must belong to selection. reason≤240chars, reaction≤80chars. Tidak ada assetId/path/tool-call dari AI.
-- [ ] Request template:
+- [x] Server allowlists `OPENROUTER_SUGGESTION_MODEL` setelah membaca model/endpoint capability. Set `provider.require_parameters:true` dan `response_format.type:json_schema` untuk endpoint compatible. Dukungan strict JSON bervariasi; local Zod validation selalu wajib. Model choice/pricing/capability diverifikasi live, tidak mengunci aliaslatest yang bisa mengubah perilaku tanpa review.
+- [x] JSON schema adalah object `{suggestions:[...]}` max5, item strict `{id,kind:'zoom'|'shake'|'reaction',startFrame,endFrame,text,strength,reason}`, required all keys, additionalProperties:false. Source frames must belong to selection. reason≤240chars, reaction≤80chars. Tidak ada assetId/path/tool-call dari AI.
+- [x] Request template:
 
 ```ts
 const request = {
@@ -528,27 +528,27 @@ const request = {
 
 `suggestionJsonSchema` dibuat dari schema di shared/suggestions; `systemPrompt` berisi rules section2b; transcript/range/momentFrame/preset dari snapshot yang tervalidasi. Call `https://openrouter.ai/api/v1/chat/completions` memakai pola auth/fetch/caps yang sama pada openrouter.ts; helper mengembalikan parsed content+usage setelah status diperiksa.
 
-- [ ] Prompt menjelaskan transcript sebagai untrusted data, frame domain, preset, jenis efek diizinkan, dan meminta saran bahasa Indonesia alami. Model tidak menerima gambar pada versi pertama sehingga tidak boleh mengklaim melihat aksi game. Saran teks reaksi terpisah dari subtitle/dialog asli.
-- [ ] Accept menghasilkan Effect UUID dan idempotent suggestionID; reject tidak mengubah komposisi. Respons kosong/refusal/invalidJSON/range error menghasilkan AI_INVALID_RESPONSE. Tidak auto-run generated source, markdown, commands, URLs, atau tool calls.
-- [ ] Key di `.env.local` hanya server/worker; tidak dikirim ke browser, NEXT_PUBLIC, project JSON, job snapshot, health, screenshot, atau console. UI menampilkan configured boolean/model name, bukan secret.
-- [ ] Timeout120s, cancellation, maksimum1200output tokens; satu request per klik. Retry paling banyak1 untuk429/503 dengan Retry-After bounded; network timeout setelah request terkirim tidak otomatis diulang karena dapat menggandakan biaya. Tidak fallback ke model lain tanpa pilihan eksplisit. Catat usage bila tersedia, bukan estimasi biaya palsu; configure provider/account spend limit via pengguna sebelum live test berbayar.
-- [ ] Tests:401/402/429/503, badJSON, incompatible endpoint, injection text, unexpected effect type, empty/refusal, source timestamp outside range, idempotent apply, dirty/stale revision, key exposure. Live smoke verifies one structured response dan apply/reject. Commit `feat: suggest validated edits through OpenRouter`.
+- [x] Prompt menjelaskan transcript sebagai untrusted data, frame domain, preset, jenis efek diizinkan, dan meminta saran bahasa Indonesia alami. Model tidak menerima gambar pada versi pertama sehingga tidak boleh mengklaim melihat aksi game. Saran teks reaksi terpisah dari subtitle/dialog asli.
+- [x] Accept menghasilkan Effect UUID dan idempotent suggestionID; reject tidak mengubah komposisi. Respons kosong/refusal/invalidJSON/range error menghasilkan AI_INVALID_RESPONSE. Tidak auto-run generated source, markdown, commands, URLs, atau tool calls.
+- [x] Key di `.env.local` hanya server/worker; tidak dikirim ke browser, NEXT_PUBLIC, project JSON, job snapshot, health, screenshot, atau console. UI menampilkan configured boolean/model name, bukan secret.
+- [x] Timeout120s, cancellation, maksimum1200output tokens; satu request per klik. Retry paling banyak1 untuk429/503 dengan Retry-After bounded; network timeout setelah request terkirim tidak otomatis diulang karena dapat menggandakan biaya. Tidak fallback ke model lain tanpa pilihan eksplisit. Catat usage bila tersedia, bukan estimasi biaya palsu; configure provider/account spend limit via pengguna sebelum live test berbayar.
+- [x] Tests:401/402/429/503, badJSON, incompatible endpoint, injection text, unexpected effect type, empty/refusal, source timestamp outside range, idempotent apply, dirty/stale revision, key exposure. Live smoke verifies one structured response dan apply/reject. Commit `feat: suggest validated edits through OpenRouter`.
 
 
 ### Task 12 — Render UI, progress, download, cancellation
 
 **Files:** create `RenderDialog.tsx`; update Editor, api, editor tests.
 
-- [ ] Dialog shows snapshot revision, output dimensions, duration and real progress. Trap focus; Escape closes view without silently cancelling job. Explicit Batalkan sends cancellation; user can reopen current job view.
-- [ ] Success offers MP4 download and reveals saved project-relative output location. Failure offers retry from same snapshot or return to editing, with distinct disk/full, codec, dependency, and cancellation messages.
-- [ ] Button guard prevents duplicate clicks; server still enforces duplicate protection. Navigation/reload can recover job from persisted state.
-- [ ] Test rendering→complete, rendering→failed, cancel, and rendering after a changed draft. Check generated download media locally. Commit `feat: surface local export lifecycle`.
+- [x] Dialog shows snapshot revision, output dimensions, duration and real progress. Trap focus; Escape closes view without silently cancelling job. Explicit Batalkan sends cancellation; user can reopen current job view.
+- [x] Success offers MP4 download and reveals saved project-relative output location. Failure offers retry from same snapshot or return to editing, with distinct disk/full, codec, dependency, and cancellation messages.
+- [x] Button guard prevents duplicate clicks; server still enforces duplicate protection. Navigation/reload can recover job from persisted state.
+- [x] Test rendering→complete, rendering→failed, cancel, and rendering after a changed draft. Check generated download media locally. Commit `feat: surface local export lifecycle`.
 
 ### Task 13 — Full verification, documentation, finish gate
 
 **Files:** create `docs/TESTING.md`, update SETUP and README; update tests and doctor.
 
-- [ ] Run smallest full suite:
+- [x] Run smallest full suite:
 
 ```powershell
 rtk npm run doctor
@@ -560,13 +560,13 @@ rtk npm run smoke:render
 rtk git diff --check
 ```
 
-- [ ] Production smoke: `rtk npm start`, use production Next UI dan worker persisten pada originlocalhost yang sama. Import300s fixture, select80–110s, point98.4, save, generate/manual captions, both presets, render, download, restart, reopen project/output.
-- [ ] Actual browser QA:1366×768,1440×900,390×844; keyboard input/focus; modal Escape/focus return; reduced motion; no console errors; input error, AI unavailable, render failure, and cancel visible. Check both original-source and output seek behavior. Use browser/computer-use when available; do not infer visual QA from build success.
-- [ ] Security proof: reject unexpected Origin/Host, path traversal, malformed Range, oversized uploads, extra AI keys, stale project save, arbitrary output access. Verify data directory not exposed by static hosting and logs do not include private transcripts.
-- [ ] Audio/visual proof on light and meme MP4: dimensions/codecs/duration, subtitle at moment, replay repeats correct frames+audio, freeze silence, no double audio, caption max two lines, crop preserves user-selected focus. Keep synthetic evidence and exclude personal media from Git.
-- [ ] Benchmark selected30s output and full3–5min source preview on device; record elapsed render/transcription, peak RAM if measurable, GPU runtime readiness, proxy quality. No universal ETA or quality claim based only on fixture. Record OpenRouter usage/model/provider bila tersedia; pastikan tidak ada secret atau transcript di evidence publik.
-- [ ] SETUP explains start/stop, data location, API key/model setup, batas data lokal versus data AI cloud, disk usage, model limitations, backups, runtime troubleshooting, and license checks. README distinguishes ready template/render vs actually verified AI integration.
-- [ ] Final completion is blocked if either preset cannot render, project cannot reopen, or timing is wrong. Missing OpenRouter configuration/capability or internet is reported as unavailable integration, not full AI system success. Commit `test: verify local funny moment workflow` after evidence passes.
+- [x] Production smoke: `rtk npm start`, use production Next UI dan worker persisten pada originlocalhost yang sama. Import300s fixture, select80–110s, point98.4, save, generate/manual captions, both presets, render, download, restart, reopen project/output.
+- [x] Actual browser QA:1366×768,1440×900,390×844; keyboard input/focus; modal Escape/focus return; reduced motion; no console errors; input error, AI unavailable, render failure, and cancel visible. Check both original-source and output seek behavior. Use browser/computer-use when available; do not infer visual QA from build success.
+- [x] Security proof: reject unexpected Origin/Host, path traversal, malformed Range, oversized uploads, extra AI keys, stale project save, arbitrary output access. Verify data directory not exposed by static hosting and logs do not include private transcripts.
+- [x] Audio/visual proof on light and meme MP4: dimensions/codecs/duration, subtitle at moment, replay repeats correct frames+audio, freeze silence, no double audio, caption max two lines, crop preserves user-selected focus. Keep synthetic evidence and exclude personal media from Git.
+- [x] Benchmark selected30s output and full3–5min source preview on device; record elapsed render/transcription, peak RAM if measurable, GPU runtime readiness, proxy quality. No universal ETA or quality claim based only on fixture. Record OpenRouter usage/model/provider bila tersedia; pastikan tidak ada secret atau transcript di evidence publik.
+- [x] SETUP explains start/stop, data location, API key/model setup, batas data lokal versus data AI cloud, disk usage, model limitations, backups, runtime troubleshooting, and license checks. README distinguishes ready template/render vs actually verified AI integration.
+- [x] Final completion is blocked if either preset cannot render, project cannot reopen, or timing is wrong. Missing OpenRouter configuration/capability or internet is reported as unavailable integration, not full AI system success. Commit `test: verify local funny moment workflow` after evidence passes.
 
 ## 7. API error vocabulary
 

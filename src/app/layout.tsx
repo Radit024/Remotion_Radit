@@ -12,7 +12,11 @@ export const metadata: Metadata = {
     "Pilih momen dari video gameplay 3–5 menit, tinjau subtitle dan saran AI, lalu render MP4 9:16 secara lokal.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="id"
