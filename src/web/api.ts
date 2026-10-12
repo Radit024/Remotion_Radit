@@ -46,6 +46,7 @@ export type HealthInfo = {
     configured: boolean;
     suggestionModel: string;
     transcriptionModel: string;
+    sttProvider?: string;
     issues: string[];
   };
 };

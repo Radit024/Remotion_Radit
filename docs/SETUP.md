@@ -42,11 +42,27 @@ copy .env.example .env.local
 Isi variabel di `.env.local` sesuai kebutuhan:
 
 ```env
-# OpenRouter API (Hanya digunakan jika fitur transkripsi STT & saran AI diaktifkan)
+# Aktifkan fitur AI (opsional, default: false)
+ENABLE_AI=true
+
+# OpenRouter API (Saran Efek AI)
 OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxx
 OPENROUTER_SUGGESTION_MODEL=meta-llama/llama-3.3-70b-instruct
+
+# Speech-to-Text (STT) Provider: "openrouter" atau "9router" (default: openrouter)
+STT_PROVIDER=openrouter
+
+# Opsi A: Jika menggunakan OpenRouter untuk STT
 OPENROUTER_TRANSCRIPTION_MODEL=openai/whisper-large-v3
-OPENROUTER_TRANSCRIPTION_LANGUAGE=id
+
+# Opsi B: Jika menggunakan 9Router untuk STT
+# STT_PROVIDER=9router
+# STT_BASE_URL=http://127.0.0.1:20128/v1
+# STT_API_KEY=9router
+# STT_MODEL=whisper-large-v3
+
+# Bahasa audio untuk transkripsi STT
+STT_LANGUAGE=id
 
 # Direktori Data Lokal (opsional, default: .data)
 DATA_DIR=.data
@@ -55,7 +71,7 @@ DATA_DIR=.data
 MAX_UPLOAD_BYTES=2147483648
 ```
 
-> **Catatan Keamanan & Privasi**: Kunci `OPENROUTER_API_KEY` hanya dibaca di sisi server dan worker (`src/server/` dan `src/worker/`). Kunci ini tidak pernah dikirim ke browser ataupun dicatat dalam log publik. Video gameplay dan berkas MP4 hasil render tetap disimpan secara lokal di mesin Anda. Hanya potongan audio dari rentang yang dipilih yang dikirim ke OpenRouter saat tombol **AI STT** ditekan secara eksplisit.
+> **Catatan Keamanan & Privasi**: Kunci API (`OPENROUTER_API_KEY` / `STT_API_KEY`) hanya dibaca di sisi server dan worker (`src/server/` dan `src/worker/`). Kunci ini tidak pernah dikirim ke browser ataupun dicatat dalam log publik. Video gameplay dan berkas MP4 hasil render tetap disimpan secara lokal di mesin Anda. Hanya potongan audio dari rentang yang dipilih yang dikirim ke provider STT saat tombol **AI STT** ditekan secara eksplisit.
 
 ---
 

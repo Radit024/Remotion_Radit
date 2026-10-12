@@ -30,6 +30,7 @@ export async function GET(request: Request) {
           configured: ai.apiKeyPresent,
           suggestionModel: ai.suggestionModel,
           transcriptionModel: ai.transcriptionModel,
+          sttProvider: ai.sttProvider,
           issues: ai.issues,
         },
       },

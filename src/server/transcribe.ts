@@ -14,6 +14,7 @@ import {
   parseUsage,
   readLimitedBody,
   requireApiKey,
+  requireSttApiKey,
   transcriptionUrl,
   type AiUsage,
 } from "./openrouter";
@@ -47,11 +48,16 @@ export async function transcribeSelectedRange(
   if (!asset.hasAudio) {
     throw new ApiError("NO_AUDIO", "Sumber tidak memiliki track audio untuk ditranskripsi");
   }
-  const apiKey = requireApiKey();
   const config = aiConfig();
+  const apiKey = requireSttApiKey();
+  const provider = config.sttProvider;
   const model = config.transcriptionModel;
   if (!model) {
-    throw new ApiError("MODEL_UNSUPPORTED", "OPENROUTER_TRANSCRIPTION_MODEL belum dikonfigurasi");
+    const hint =
+      provider === "9router"
+        ? "STT_MODEL atau OPENROUTER_TRANSCRIPTION_MODEL"
+        : "OPENROUTER_TRANSCRIPTION_MODEL";
+    throw new ApiError("MODEL_UNSUPPORTED", `${hint} belum dikonfigurasi`);
   }
 
   const sourcePath = assetContentPath(asset);
@@ -112,27 +118,69 @@ export async function transcribeSelectedRange(
       }
 
       const audioBytes = fs.readFileSync(wavPath);
-      const payload = {
-        model,
-        input_audio: { data: audioBytes.toString("base64"), format: "wav" },
-        language: config.transcriptionLanguage,
-        response_format: "verbose_json",
-        timestamp_granularities: ["segment", "word"],
-      };
+      let response: Response;
+      const targetUrl = transcriptionUrl(provider, config.sttBaseUrl);
 
-      const response = await fetchWithTimeout(
-        transcriptionUrl(),
-        {
-          method: "POST",
-          headers: authHeaders(apiKey),
-          body: JSON.stringify(payload),
-          signal,
-        },
-        120_000,
-      );
+      if (provider === "openrouter") {
+        const payload = {
+          model,
+          input_audio: { data: audioBytes.toString("base64"), format: "wav" },
+          language: config.transcriptionLanguage,
+          response_format: "verbose_json",
+          timestamp_granularities: ["segment", "word"],
+        };
+
+        response = await fetchWithTimeout(
+          targetUrl,
+          {
+            method: "POST",
+            headers: authHeaders(apiKey),
+            body: JSON.stringify(payload),
+            signal,
+          },
+          120_000,
+        );
+      } else {
+        // 9Router / OpenAI-compatible endpoint (multipart/form-data)
+        const formData = new FormData();
+        const audioBlob = new Blob([audioBytes], { type: "audio/wav" });
+        formData.append("file", audioBlob, `chunk-${chunkIndex}.wav`);
+        formData.append("model", model);
+        formData.append("response_format", "verbose_json");
+        formData.append("timestamp_granularities[]", "segment");
+        if (config.transcriptionLanguage) {
+          formData.append("language", config.transcriptionLanguage);
+        }
+
+        const headers: Record<string, string> = {
+          "HTTP-Referer": "http://127.0.0.1:3000",
+          "X-Title": "Moment Lab",
+        };
+        if (apiKey) {
+          headers["Authorization"] = `Bearer ${apiKey}`;
+        }
+
+        response = await fetchWithTimeout(
+          targetUrl,
+          {
+            method: "POST",
+            headers,
+            body: formData,
+            signal,
+          },
+          120_000,
+        );
+      }
+
       const body = await readLimitedBody(response);
       if (!response.ok) {
-        throw mapUpstreamStatus(response.status, body);
+        const providerLabel =
+          provider === "9router"
+            ? "9Router"
+            : provider === "openai"
+              ? "OpenAI"
+              : "OpenRouter";
+        throw mapUpstreamStatus(response.status, body, providerLabel);
       }
 
       let parsed: unknown;

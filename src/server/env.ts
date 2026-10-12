@@ -3,12 +3,18 @@ import path from "node:path";
 
 export const projectRoot = process.cwd();
 
+export type SttProvider = "openrouter" | "9router" | "openai";
+
 export type AiConfig = {
   enabled: boolean;
   apiKeyPresent: boolean;
   suggestionModel: string;
   transcriptionModel: string;
   transcriptionLanguage: string;
+  sttProvider: SttProvider;
+  sttBaseUrl: string;
+  sttApiKey: string;
+  sttApiKeyPresent: boolean;
   issues: string[];
 };
 
@@ -50,30 +56,79 @@ export function expectedHost(): string {
 export function aiConfig(): AiConfig {
   const enableEnv = readEnv("ENABLE_AI").toLowerCase();
   const enabled = enableEnv === "true" || enableEnv === "1";
+
+  const rawSttProvider = readEnv("STT_PROVIDER").toLowerCase();
+  const sttProvider: SttProvider =
+    rawSttProvider === "9router" || rawSttProvider === "ninerouter"
+      ? "9router"
+      : rawSttProvider === "openai"
+        ? "openai"
+        : "openrouter";
+
+  const defaultSttBase =
+    sttProvider === "9router"
+      ? "http://127.0.0.1:20128/v1"
+      : "https://openrouter.ai/api/v1";
+
+  const sttBaseUrl =
+    readEnv("STT_BASE_URL") ||
+    readEnv("NINEROUTER_BASE_URL") ||
+    defaultSttBase;
+
+  const sttApiKey =
+    readEnv("STT_API_KEY") ||
+    readEnv("OPENROUTER_API_KEY") ||
+    (sttProvider === "9router" ? "9router" : "");
+
   const suggestionModel = readEnv("OPENROUTER_SUGGESTION_MODEL");
-  const transcriptionModel = readEnv("OPENROUTER_TRANSCRIPTION_MODEL");
+  const transcriptionModel =
+    readEnv("STT_MODEL") ||
+    readEnv("OPENROUTER_TRANSCRIPTION_MODEL") ||
+    (sttProvider === "9router" ? "whisper-large-v3" : "");
+
+  const transcriptionLanguage =
+    readEnv("STT_LANGUAGE") ||
+    readEnv("OPENROUTER_TRANSCRIPTION_LANGUAGE") ||
+    "id";
+
   const issues: string[] = [];
 
   if (!enabled) {
     issues.push("Dukungan AI OpenRouter dinonaktifkan sementara.");
   } else {
-    if (!readEnv("OPENROUTER_API_KEY")) {
+    if (!readEnv("OPENROUTER_API_KEY") && sttProvider === "openrouter") {
       issues.push("OPENROUTER_API_KEY belum diisi");
     }
     if (!suggestionModel) {
       issues.push("OPENROUTER_SUGGESTION_MODEL belum diisi");
     }
     if (!transcriptionModel) {
-      issues.push("OPENROUTER_TRANSCRIPTION_MODEL belum diisi");
+      if (sttProvider === "9router") {
+        issues.push("STT_MODEL atau OPENROUTER_TRANSCRIPTION_MODEL belum diisi");
+      } else {
+        issues.push("OPENROUTER_TRANSCRIPTION_MODEL belum diisi");
+      }
     }
   }
 
+  const sttApiKeyPresent = Boolean(sttApiKey);
+  const openrouterKeyPresent = Boolean(readEnv("OPENROUTER_API_KEY"));
+  const apiKeyPresent =
+    enabled &&
+    (sttProvider === "9router"
+      ? sttApiKeyPresent || openrouterKeyPresent
+      : openrouterKeyPresent);
+
   return {
     enabled,
-    apiKeyPresent: enabled && Boolean(readEnv("OPENROUTER_API_KEY")),
+    apiKeyPresent,
     suggestionModel,
     transcriptionModel,
-    transcriptionLanguage: readEnv("OPENROUTER_TRANSCRIPTION_LANGUAGE") || "id",
+    transcriptionLanguage,
+    sttProvider,
+    sttBaseUrl,
+    sttApiKey,
+    sttApiKeyPresent: enabled && sttApiKeyPresent,
     issues,
   };
 }
