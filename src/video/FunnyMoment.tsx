@@ -133,7 +133,7 @@ const InstructionalComposition: React.FC<{ width: number; height: number }> = ({
         justifyContent: "center",
         padding: 80,
         textAlign: "center",
-        fontFamily: "Barlow, sans-serif",
+        fontFamily: "Sora, sans-serif",
         opacity: fontState ? 1 : 0.6,
       }}
     >

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import {
-  barlow,
+  sora,
   barlowCondensed,
   ibmPlexMono,
 } from "@/web/fonts";
@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${barlow.variable} ${barlowCondensed.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${sora.variable} ${barlowCondensed.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>

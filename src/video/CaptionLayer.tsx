@@ -53,7 +53,7 @@ export const CaptionLayer: React.FC<Props> = ({ captions, captionY, height }) =>
                 borderRadius: 14,
                 background: "rgba(10, 12, 13, 0.72)",
                 color: "#EDF1EE",
-                fontFamily: "Barlow",
+                fontFamily: "Sora, sans-serif",
                 fontWeight: 700,
                 fontSize: 58,
                 lineHeight: 1.16,

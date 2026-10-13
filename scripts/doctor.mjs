@@ -39,20 +39,19 @@ for (const pkg of [
   "emoji-mart",
   "@emoji-mart/react",
   "@twemoji/api",
+  "@fontsource/sora",
+  "@fontsource/barlow-condensed",
+  "@fontsource/ibm-plex-mono",
 ]) {
   const ok = fs.existsSync(path.join(process.cwd(), "node_modules", pkg));
   checks.push({ name: pkg, ok, detail: ok ? "terpasang" : "belum terpasang" });
 }
 
 for (const file of [
-  "public/fonts/barlow-400.woff2",
-  "public/fonts/barlow-500.woff2",
-  "public/fonts/barlow-600.woff2",
-  "public/fonts/barlow-700.woff2",
-  "public/fonts/barlow-800.woff2",
-  "public/fonts/barlow-condensed-800.woff2",
-  "public/fonts/ibm-plex-mono-400.woff2",
-  "public/fonts/ibm-plex-mono-500.woff2",
+  "node_modules/@fontsource/sora/files/sora-latin-400-normal.woff2",
+  "node_modules/@fontsource/sora/files/sora-latin-700-normal.woff2",
+  "node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-800-normal.woff2",
+  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2",
   "public/emoji/manifest.json",
 ]) {
   const ok = fs.existsSync(path.join(process.cwd(), file));

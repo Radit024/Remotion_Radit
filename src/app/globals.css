@@ -29,8 +29,9 @@
   --color-accent-lime-foreground: var(--accent-lime-foreground);
   --color-track-subtitle: var(--track-subtitle);
   --color-track-moment: var(--track-moment);
-  --font-ui: var(--font-barlow);
-  --font-caption: var(--font-barlow);
+  --font-ui: var(--font-sora), sans-serif;
+  --font-heading: var(--font-sora), sans-serif;
+  --font-caption: var(--font-sora), sans-serif;
   --font-reaction: var(--font-barlow-condensed);
   --font-mono: var(--font-ibm-plex-mono);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -77,6 +78,9 @@
   }
   html {
     @apply font-ui;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
   }
 }
 

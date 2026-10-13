@@ -6,3 +6,6 @@ node_modules
 coverage
 test-output
 *.tsbuildinfo
+.agents
+
+scripts/verify-assets.mjs

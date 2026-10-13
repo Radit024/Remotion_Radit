@@ -70,7 +70,7 @@ export const EffectLayer: React.FC<Props> = ({ effects, assetUrls }) => {
             left: 0,
             right: 0,
             textAlign: "center",
-            fontFamily: '"Barlow Condensed", Barlow, sans-serif',
+            fontFamily: '"Barlow Condensed", Sora, sans-serif',
             fontWeight: 800,
             fontSize: 130,
             lineHeight: 1.05,
