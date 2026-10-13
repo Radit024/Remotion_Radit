@@ -16,6 +16,7 @@ export type ProjectSummary = {
   name: string;
   updatedAt: string;
   sourceName: string;
+  assetId?: string;
 };
 
 function projectPath(id: string): string {
@@ -121,6 +122,7 @@ export function listProjects(): ProjectSummary[] {
           ? ((edit as unknown as { updatedAt: string }).updatedAt)
           : fs.statSync(file).mtime.toISOString(),
         sourceName: source,
+        assetId: edit.assetId,
       });
     } catch {
       /* ignore malformed projects in list */
@@ -151,6 +153,16 @@ export function readProject(id: string): StoredProject {
   }
   const stored = raw as StoredProject;
   return { ...parsed.data, createdAt: stored.createdAt ?? "", updatedAt: stored.updatedAt ?? "" };
+}
+
+export function deleteProject(id: string): void {
+  if (!/^[0-9a-fA-F-]{36}$/.test(id)) {
+    throw new ApiError("VALIDATION", "id proyek tidak valid");
+  }
+  const file = projectPath(id);
+  if (fs.existsSync(file)) {
+    fs.rmSync(file, { force: true });
+  }
 }
 
 export function createProject(assetId: string, name: string | undefined): StoredProject {

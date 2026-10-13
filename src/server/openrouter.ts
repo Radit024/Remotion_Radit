@@ -176,7 +176,7 @@ export function authHeaders(apiKey: string): HeadersInit {
     "Content-Type": "application/json",
     Authorization: `Bearer ${apiKey}`,
     "HTTP-Referer": "http://127.0.0.1:3000",
-    "X-Title": "Moment Lab",
+    "X-Title": "Takefield Studio",
   };
 }
 

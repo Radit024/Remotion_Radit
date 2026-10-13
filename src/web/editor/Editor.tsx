@@ -1,19 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  Film,
-  Save,
-  Play,
-  Upload,
-  Plus,
-  Sparkles,
-  Layers,
-  Subtitles,
-  Smile,
-  Check,
-  AlertCircle,
-} from "lucide-react";
+  faFilm,
+  faFloppyDisk,
+  faPlay,
+  faUpload,
+  faPlus,
+  faLayerGroup,
+  faClosedCaptioning,
+  faFaceSmile,
+  faCheck,
+  faCircleExclamation,
+  faArrowLeft,
+} from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -41,9 +42,14 @@ import { SuggestionPanel } from "./SuggestionPanel";
 import { OutputTimeline } from "./OutputTimeline";
 import { RenderDialog } from "./RenderDialog";
 
-export const Editor: React.FC = () => {
+export interface EditorProps {
+  initialProjectId?: string | null;
+  onNavigateHome?: () => void;
+}
+
+export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome }) => {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjectId ?? null);
   const [health, setHealth] = useState<HealthInfo | null>(null);
   const [activeCenterTab, setActiveCenterTab] = useState<"output" | "source">("output");
   const [activeToolTab, setActiveToolTab] = useState("preset");
@@ -176,20 +182,34 @@ export const Editor: React.FC = () => {
   const sourceUrl = project?.assetId ? `/api/assets/${project.assetId}/content` : "";
 
   return (
-    <div className="flex h-screen w-full flex-col bg-[#111416] text-[#EDF1EE]">
+    <div className="flex h-screen w-full flex-col bg-background text-foreground font-ui">
       {/* Top Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#30383c] bg-[#191e21] px-4">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
         <div className="flex items-center gap-3">
+          {onNavigateHome && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onNavigateHome}
+              className="h-8 gap-1.5 border-border bg-background px-2.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+              title="Kembali ke Beranda"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} className="h-3.5 w-3.5" />
+              <span>Beranda</span>
+            </Button>
+          )}
+
           <div className="flex items-center gap-2">
-            <Film className="h-5 w-5 text-[#D4F77C]" />
-            <span className="font-bold tracking-tight text-[#EDF1EE]">Moment Lab</span>
+            <FontAwesomeIcon icon={faFilm} className="h-5 w-5 text-primary" />
+            <span className="font-heading font-bold tracking-tight text-foreground">Takefield Studio</span>
           </div>
 
           {/* Project selector */}
           <select
             value={selectedProjectId ?? ""}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="h-8 rounded border border-[#30383c] bg-[#111416] px-2 text-xs text-[#EDF1EE] focus:outline-none"
+            className="h-8 rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
           >
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -198,7 +218,7 @@ export const Editor: React.FC = () => {
             ))}
           </select>
 
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-[#30383c] bg-[#111416] px-2.5 py-1 text-xs text-[#EDF1EE] hover:bg-[#30383c]">
+          <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-border bg-background px-2.5 py-1 text-xs text-foreground hover:bg-muted">
             <input
               type="file"
               accept="video/*"
@@ -206,7 +226,7 @@ export const Editor: React.FC = () => {
               onChange={handleUploadNewVideo}
               disabled={isUploadingSource}
             />
-            <Plus className="mr-1 h-3.5 w-3.5" />
+            <FontAwesomeIcon icon={faPlus} className="mr-1.5 h-3.5 w-3.5" />
             {isUploadingSource ? "Mengunggah..." : "Video Baru"}
           </label>
         </div>
@@ -216,19 +236,19 @@ export const Editor: React.FC = () => {
           <div className="flex items-center gap-2 text-xs">
             {health?.ai && !health.ai.enabled && (
               <span
-                className="rounded border border-[#30383c] bg-[#111416] px-2 py-0.5 text-[11px] text-[#A9B4B1]"
+                className="rounded border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground"
                 title="Dukungan AI OpenRouter dinonaktifkan sementara"
               >
                 AI Nonaktif
               </span>
             )}
             {isDirty ? (
-              <span className="flex items-center gap-1 text-[#FFC879]">
-                <AlertCircle className="h-3.5 w-3.5" /> Belum Tersimpan
+              <span className="flex items-center gap-1 text-track-moment">
+                <FontAwesomeIcon icon={faCircleExclamation} className="h-3.5 w-3.5" /> Belum Tersimpan
               </span>
             ) : (
               <span className="flex items-center gap-1 text-emerald-400">
-                <Check className="h-3.5 w-3.5" /> Tersimpan (Rev {project?.revision ?? 1})
+                <FontAwesomeIcon icon={faCheck} className="h-3.5 w-3.5" /> Tersimpan (Rev {project?.revision ?? 1})
               </span>
             )}
           </div>
@@ -239,9 +259,9 @@ export const Editor: React.FC = () => {
             variant="outline"
             onClick={() => void save()}
             disabled={!isDirty || isSaving}
-            className="h-8 border-[#30383c] bg-[#111416] text-xs text-[#EDF1EE] hover:bg-[#30383c]"
+            className="h-8 border-border bg-background text-xs text-foreground hover:bg-muted"
           >
-            <Save className="mr-1.5 h-3.5 w-3.5" />
+            <FontAwesomeIcon icon={faFloppyDisk} className="mr-1.5 h-3.5 w-3.5" />
             {isSaving ? "Menyimpan..." : "Simpan"}
           </Button>
 
@@ -250,9 +270,9 @@ export const Editor: React.FC = () => {
             size="sm"
             onClick={handleTriggerRender}
             disabled={!draft}
-            className="h-8 bg-[#D4F77C] text-xs font-semibold text-[#111416] hover:bg-[#D4F77C]/90"
+            className="h-8 bg-primary text-xs font-semibold text-primary-foreground hover:brightness-105 active:scale-[0.98] transition-all"
           >
-            <Play className="mr-1.5 h-3.5 w-3.5 fill-current" />
+            <FontAwesomeIcon icon={faPlay} className="mr-1.5 h-3.5 w-3.5" />
             Render 9:16
           </Button>
         </div>
@@ -261,14 +281,14 @@ export const Editor: React.FC = () => {
       {/* Main Content Area */}
       {!draft ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <Film className="h-12 w-12 text-[#A9B4B1]" />
+          <FontAwesomeIcon icon={faFilm} className="h-10 w-10 text-muted-foreground" />
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-[#EDF1EE]">Belum Ada Proyek yang Dipilih</h2>
-            <p className="max-w-md text-xs text-[#A9B4B1]">
+            <h2 className="text-lg font-semibold text-foreground">Belum Ada Proyek yang Dipilih</h2>
+            <p className="max-w-md text-xs text-muted-foreground">
               Pilih proyek di atas atau unggah video gameplay berdurasi 3–5 menit untuk memulai mengedit momen lucu.
             </p>
           </div>
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-md bg-[#D4F77C] px-4 py-2 text-xs font-semibold text-[#111416] hover:bg-[#D4F77C]/90">
+          <label className="inline-flex cursor-pointer items-center justify-center rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:brightness-105 active:scale-[0.98] transition-all">
             <input
               type="file"
               accept="video/*"
@@ -276,7 +296,7 @@ export const Editor: React.FC = () => {
               onChange={handleUploadNewVideo}
               disabled={isUploadingSource}
             />
-            <Upload className="mr-2 h-4 w-4" />
+            <FontAwesomeIcon icon={faUpload} className="mr-2 h-4 w-4" />
             Unggah Video Gameplay
           </label>
         </div>
@@ -285,17 +305,17 @@ export const Editor: React.FC = () => {
           {/* Middle Workspace: 3 Columns (Tools | Preview | AI Suggestions) */}
           <div className="grid flex-1 grid-cols-12 overflow-hidden">
             {/* Left Column: Tools (Presets, Subtitles, Assets) */}
-            <div className="col-span-3 flex flex-col border-r border-[#30383c] bg-[#191e21] p-3 overflow-y-auto">
+            <div className="col-span-3 flex flex-col border-r border-border bg-card p-3 overflow-y-auto">
               <Tabs value={activeToolTab} onValueChange={setActiveToolTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-[#111416] p-0.5">
+                <TabsList className="grid w-full grid-cols-3 bg-background p-0.5">
                   <TabsTrigger value="preset" className="text-xs">
-                    <Layers className="mr-1 h-3.5 w-3.5" /> Preset
+                    <FontAwesomeIcon icon={faLayerGroup} className="mr-1.5 h-3.5 w-3.5" /> Preset
                   </TabsTrigger>
                   <TabsTrigger value="subtitle" className="text-xs">
-                    <Subtitles className="mr-1 h-3.5 w-3.5" /> Subtitle
+                    <FontAwesomeIcon icon={faClosedCaptioning} className="mr-1.5 h-3.5 w-3.5" /> Subtitle
                   </TabsTrigger>
                   <TabsTrigger value="asset" className="text-xs">
-                    <Smile className="mr-1 h-3.5 w-3.5" /> Stiker
+                    <FontAwesomeIcon icon={faFaceSmile} className="mr-1.5 h-3.5 w-3.5" /> Stiker
                   </TabsTrigger>
                 </TabsList>
 
@@ -334,14 +354,14 @@ export const Editor: React.FC = () => {
             <div className="col-span-6 flex flex-col items-center justify-between overflow-y-auto p-4 gap-3">
               {/* Tab Switcher between Remotion 9:16 and Source Player */}
               <div className="flex w-full items-center justify-center">
-                <div className="flex rounded-md border border-[#30383c] bg-[#111416] p-0.5">
+                <div className="flex rounded-md border border-border bg-background p-0.5">
                   <button
                     type="button"
                     onClick={() => setActiveCenterTab("output")}
                     className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
                       activeCenterTab === "output"
-                        ? "bg-[#30383c] text-[#EDF1EE]"
-                        : "text-[#A9B4B1] hover:text-[#EDF1EE]"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     Hasil 9:16 (Preview Remotion)
@@ -351,8 +371,8 @@ export const Editor: React.FC = () => {
                     onClick={() => setActiveCenterTab("source")}
                     className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
                       activeCenterTab === "source"
-                        ? "bg-[#30383c] text-[#EDF1EE]"
-                        : "text-[#A9B4B1] hover:text-[#EDF1EE]"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     Sumber Gameplay (Pilih Rentang)
@@ -403,7 +423,7 @@ export const Editor: React.FC = () => {
             </div>
 
             {/* Right Column: AI Suggestions */}
-            <div className="col-span-3 flex flex-col border-l border-[#30383c] bg-[#191e21] p-3 overflow-y-auto">
+            <div className="col-span-3 flex flex-col border-l border-border bg-card p-3 overflow-y-auto">
               <SuggestionPanel
                 suggestions={suggestions}
                 onApplySuggestion={handleApplySuggestion}
@@ -416,7 +436,7 @@ export const Editor: React.FC = () => {
           </div>
 
           {/* Bottom Panel: Compiled Output Timeline */}
-          <div className="h-44 shrink-0 border-t border-[#30383c] bg-[#191e21] p-2">
+          <div className="h-44 shrink-0 border-t border-border bg-card p-2">
             <OutputTimeline
               edit={draft}
               currentFrame={currentOutputFrame}

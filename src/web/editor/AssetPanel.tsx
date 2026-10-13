@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Upload, Music, Image as ImageIcon, Plus } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faUpload,
+  faMusic,
+  faImage,
+  faPlus,
+} from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import type { Asset, Effect } from "@/shared/edit";
 import { fetchAssets, uploadAsset } from "@/web/api";
@@ -67,7 +73,7 @@ export const AssetPanel: React.FC<AssetPanelProps> = ({
             onChange={handleUpload}
             disabled={isUploading}
           />
-          <Upload className="mr-1 h-3.5 w-3.5" />
+          <FontAwesomeIcon icon={faUpload} className="mr-1.5 h-3.5 w-3.5" />
           {isUploading ? "Mengunggah..." : "Unggah Aset"}
         </label>
       </div>
@@ -85,9 +91,9 @@ export const AssetPanel: React.FC<AssetPanelProps> = ({
             >
               <div className="flex items-center gap-2 truncate">
                 {asset.kind === "audio" ? (
-                  <Music className="h-4 w-4 shrink-0 text-[#79CDD0]" />
+                  <FontAwesomeIcon icon={faMusic} className="h-3.5 w-3.5 shrink-0 text-[#79CDD0]" />
                 ) : (
-                  <ImageIcon className="h-4 w-4 shrink-0 text-[#FFC879]" />
+                  <FontAwesomeIcon icon={faImage} className="h-3.5 w-3.5 shrink-0 text-[#FFC879]" />
                 )}
                 <span className="truncate">{asset.name}</span>
               </div>
@@ -98,7 +104,7 @@ export const AssetPanel: React.FC<AssetPanelProps> = ({
                 onClick={() => addEffectWithAsset(asset)}
                 className="h-7 text-xs text-[#D4F77C] hover:bg-[#30383c]"
               >
-                <Plus className="mr-1 h-3 w-3" /> Pasang
+                <FontAwesomeIcon icon={faPlus} className="mr-1 h-3 w-3" /> Pasang
               </Button>
             </div>
           ))

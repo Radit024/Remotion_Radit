@@ -154,7 +154,7 @@ export async function transcribeSelectedRange(
 
         const headers: Record<string, string> = {
           "HTTP-Referer": "http://127.0.0.1:3000",
-          "X-Title": "Moment Lab",
+          "X-Title": "Takefield Studio",
         };
         if (apiKey) {
           headers["Authorization"] = `Bearer ${apiKey}`;

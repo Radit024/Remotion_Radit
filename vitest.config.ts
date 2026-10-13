@@ -13,5 +13,6 @@ export default defineConfig({
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx", "src/**/*.test.ts", "src/**/*.test.tsx"],
     exclude: ["tests/render.integration.test.ts", "node_modules", ".next"],
     setupFiles: ["tests/setup.ts"],
+    fileParallelism: false,
   },
 });

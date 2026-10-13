@@ -170,3 +170,11 @@ export async function cancelJob(id: string): Promise<JobInfo> {
   const data = await handleResponse<{ job: JobInfo }>(res);
   return data.job;
 }
+
+export async function deleteProject(id: string): Promise<void> {
+  const res = await fetch(`/api/projects/${id}`, {
+    method: "DELETE",
+  });
+  await handleResponse<{ success: boolean }>(res);
+}
+

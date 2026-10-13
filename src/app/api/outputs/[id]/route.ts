@@ -26,7 +26,7 @@ export async function GET(
     const stat = fs.statSync(filePath);
     const nodeStream = fs.createReadStream(filePath);
     const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
-    const safeName = safeFileNameForDownload(`moment-lab-${id.slice(0, 8)}`);
+    const safeName = safeFileNameForDownload(`takefield-studio-${id.slice(0, 8)}`);
 
     return new Response(webStream as unknown as BodyInit, {
       status: 200,

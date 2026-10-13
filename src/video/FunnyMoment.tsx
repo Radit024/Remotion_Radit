@@ -138,7 +138,7 @@ const InstructionalComposition: React.FC<{ width: number; height: number }> = ({
       }}
     >
       <div style={{ maxWidth: width * 0.8 }}>
-        <div style={{ fontSize: 84, fontWeight: 700, marginBottom: 24 }}>Moment Lab</div>
+        <div style={{ fontSize: 84, fontWeight: 700, marginBottom: 24 }}>Takefield Studio</div>
         <div style={{ fontSize: 44, color: "#A9B4B1", lineHeight: 1.3 }}>
           Buat proyek di aplikasi, pilih satu momen dari video sumber, lalu render komposisi ini
           dengan inputProps yang memuat edit yang sudah tervalidasi.

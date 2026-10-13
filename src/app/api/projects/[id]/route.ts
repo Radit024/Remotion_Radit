@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Edit } from "@/shared/edit";
 import { guardRead, guardMutation, assertUuid, apiErrorResponse, ApiError } from "@/server/guard";
-import { readProject, saveProject } from "@/server/projects";
+import { readProject, saveProject, deleteProject } from "@/server/projects";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,3 +68,23 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    guardMutation(request);
+    const { id } = await context.params;
+    assertUuid(id, "id proyek");
+    deleteProject(id);
+    return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    if (error instanceof ApiError) return apiErrorResponse(error);
+    return NextResponse.json(
+      { error: { code: "VALIDATION", message: String(error) } },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+}
+

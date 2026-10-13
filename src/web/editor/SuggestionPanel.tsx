@@ -1,7 +1,13 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Check, X, Zap } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faWandMagicSparkles,
+  faCheck,
+  faXmark,
+  faBolt,
+} from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import type { Effect } from "@/shared/edit";
 import type { Suggestion } from "@/shared/suggestions";
@@ -47,7 +53,7 @@ export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
               : "text-[#D4F77C] hover:bg-[#D4F77C]/10"
           }`}
         >
-          <Sparkles className="mr-1 h-3.5 w-3.5" />
+          <FontAwesomeIcon icon={faWandMagicSparkles} className="mr-1.5 h-3.5 w-3.5" />
           {isLoading ? "Menganalisis..." : aiEnabled ? "Minta Saran AI" : "AI Nonaktif"}
         </Button>
       </div>
@@ -66,8 +72,8 @@ export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
               className="flex flex-col gap-2 rounded border border-[#30383c] bg-[#111416] p-2.5 text-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 font-semibold text-[#FFC879]">
-                  <Zap className="h-3.5 w-3.5" />
+                <span className="flex items-center gap-1.5 font-semibold text-[#FFC879]">
+                  <FontAwesomeIcon icon={faBolt} className="h-3 w-3" />
                   {sug.kind.toUpperCase()}{" "}
                   <span className="font-mono text-[10px] text-[#A9B4B1]">
                     ({formatSec(sug.startFrame)}s - {formatSec(sug.endFrame)}s)
@@ -81,7 +87,7 @@ export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
                     onClick={() => onApplySuggestion(sug)}
                     className="h-6 border-[#D4F77C]/50 bg-transparent px-2 text-[11px] text-[#D4F77C] hover:bg-[#D4F77C]/10"
                   >
-                    <Check className="mr-1 h-3 w-3" /> Terapkan
+                    <FontAwesomeIcon icon={faCheck} className="mr-1 h-2.5 w-2.5" /> Terapkan
                   </Button>
                   <Button
                     type="button"
@@ -90,7 +96,7 @@ export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
                     onClick={() => onDismissSuggestion(sug.id)}
                     className="h-6 w-6 p-0 text-[#A9B4B1] hover:text-rose-400"
                   >
-                    <X className="h-3 w-3" />
+                    <FontAwesomeIcon icon={faXmark} className="h-3 w-3" />
                   </Button>
                 </div>
               </div>

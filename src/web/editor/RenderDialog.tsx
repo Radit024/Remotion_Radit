@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Download, XCircle, CheckCircle2, Loader2, Video } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faDownload,
+  faCircleXmark,
+  faCircleCheck,
+  faSpinner,
+  faVideo,
+} from "@fortawesome/free-solid-svg-icons";
 import {
   Dialog,
   DialogContent,
@@ -85,7 +92,7 @@ export const RenderDialog: React.FC<RenderDialogProps> = ({
       <DialogContent className="border-[#30383c] bg-[#191e21] text-[#EDF1EE] sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base text-[#EDF1EE]">
-            <Video className="h-5 w-5 text-[#D4F77C]" />
+            <FontAwesomeIcon icon={faVideo} className="h-4 w-4 text-[#D4F77C]" />
             Ekspor Video 9:16 — {projectName}
           </DialogTitle>
           <DialogDescription className="text-xs text-[#A9B4B1]">
@@ -99,7 +106,7 @@ export const RenderDialog: React.FC<RenderDialogProps> = ({
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[#A9B4B1]">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#D4F77C]" />
+                  <FontAwesomeIcon icon={faSpinner} className="h-3.5 w-3.5 animate-spin text-[#D4F77C]" />
                   {job?.status === "queued" ? "Dalam antrean worker..." : "Sedang merender video..."}
                 </span>
                 <span className="font-mono text-[#D4F77C]">{progressPercent}%</span>
@@ -112,7 +119,7 @@ export const RenderDialog: React.FC<RenderDialogProps> = ({
           {isDone && (
             <div className="flex flex-col gap-3 rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-3">
               <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-                <CheckCircle2 className="h-4 w-4" />
+                <FontAwesomeIcon icon={faCircleCheck} className="h-4 w-4" />
                 Render Berhasil Selesai!
               </div>
               <p className="text-[11px] text-[#A9B4B1]">
@@ -124,7 +131,7 @@ export const RenderDialog: React.FC<RenderDialogProps> = ({
                   download
                   className="inline-flex items-center justify-center rounded-md bg-[#D4F77C] px-3 py-2 text-xs font-semibold text-[#111416] hover:bg-[#D4F77C]/90"
                 >
-                  <Download className="mr-1.5 h-4 w-4" />
+                  <FontAwesomeIcon icon={faDownload} className="mr-1.5 h-3.5 w-3.5" />
                   Unduh MP4 Hasil Render
                 </a>
               )}
@@ -135,7 +142,7 @@ export const RenderDialog: React.FC<RenderDialogProps> = ({
           {(isFailed || isCancelled) && (
             <div className="flex flex-col gap-2 rounded-lg border border-rose-500/30 bg-rose-950/20 p-3">
               <div className="flex items-center gap-2 text-rose-400 font-semibold">
-                <XCircle className="h-4 w-4" />
+                <FontAwesomeIcon icon={faCircleXmark} className="h-4 w-4" />
                 {isCancelled ? "Render Dibatalkan" : "Render Gagal"}
               </div>
               <p className="text-[11px] text-[#A9B4B1]">

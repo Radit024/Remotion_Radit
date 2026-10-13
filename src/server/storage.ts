@@ -115,6 +115,6 @@ export function isManagedPath(candidate: string, base: string): boolean {
 
 export function safeFileNameForDownload(name: string): string {
   const cleaned = name.replace(/[\r\n"\\/:*?<>|]+/g, "_").replace(/\s+/g, " ").trim();
-  const base = cleaned.length > 0 ? cleaned.slice(0, 120) : "moment-lab-output.mp4";
+  const base = cleaned.length > 0 ? cleaned.slice(0, 120) : "takefield-studio-output";
   return `${base}.mp4`;
 }

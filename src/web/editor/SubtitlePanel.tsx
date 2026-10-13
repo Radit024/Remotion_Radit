@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Trash2, Upload, Download, Sparkles } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faPlus,
+  faTrashCan,
+  faUpload,
+  faDownload,
+  faWandMagicSparkles,
+} from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Caption } from "@/shared/edit";
@@ -105,7 +112,7 @@ export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
                 : "text-[#D4F77C] hover:bg-[#D4F77C]/10"
             }`}
           >
-            <Sparkles className="mr-1 h-3.5 w-3.5" />
+            <FontAwesomeIcon icon={faWandMagicSparkles} className="mr-1.5 h-3.5 w-3.5" />
             {isTranscribing ? "Mentranskripsi..." : aiEnabled ? "AI STT" : "AI STT (Nonaktif)"}
           </Button>
 
@@ -116,7 +123,7 @@ export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
               className="hidden"
               onChange={handleImportSrt}
             />
-            <Upload className="h-3.5 w-3.5" />
+            <FontAwesomeIcon icon={faUpload} className="h-3.5 w-3.5" />
           </label>
 
           <Button
@@ -127,7 +134,7 @@ export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
             disabled={captions.length === 0}
             className="border-[#30383c] bg-[#111416] text-[#A9B4B1] hover:bg-[#30383c]"
           >
-            <Download className="h-3.5 w-3.5" />
+            <FontAwesomeIcon icon={faDownload} className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
@@ -158,7 +165,7 @@ export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
           disabled={!newText.trim()}
           className="h-7 bg-[#30383c] text-xs text-[#EDF1EE] hover:bg-[#404a50]"
         >
-          <Plus className="mr-1 h-3.5 w-3.5" />
+          <FontAwesomeIcon icon={faPlus} className="mr-1 h-3 w-3" />
           Tambah Cue Subtitle
         </Button>
       </div>
@@ -193,7 +200,7 @@ export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
                   onClick={() => removeCaption(cap.id)}
                   className="h-6 w-6 p-0 text-[#A9B4B1] hover:text-rose-400"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <FontAwesomeIcon icon={faTrashCan} className="h-3 w-3" />
                 </Button>
               </div>
 

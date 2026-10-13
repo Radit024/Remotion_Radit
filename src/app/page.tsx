@@ -1,5 +1,5 @@
-import { Editor } from "@/web/editor/Editor";
+import { AppShell } from "@/web/AppShell";
 
 export default function Page() {
-  return <Editor />;
+  return <AppShell />;
 }

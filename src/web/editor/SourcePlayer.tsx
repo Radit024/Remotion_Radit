@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { Play, Pause, RotateCcw, Flag, ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faPlay,
+  faPause,
+  faRotateLeft,
+  faFlag,
+  faBackwardStep,
+  faForwardStep,
+} from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { FPS } from "@/shared/edit";
 
@@ -108,7 +116,11 @@ export const SourcePlayer: React.FC<SourcePlayerProps> = ({
             onClick={togglePlay}
             className="border-[#30383c] bg-[#111416] text-[#EDF1EE] hover:bg-[#30383c]"
           >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {isPlaying ? (
+              <FontAwesomeIcon icon={faPause} className="h-3.5 w-3.5" />
+            ) : (
+              <FontAwesomeIcon icon={faPlay} className="h-3.5 w-3.5" />
+            )}
           </Button>
 
           <Button
@@ -139,7 +151,7 @@ export const SourcePlayer: React.FC<SourcePlayerProps> = ({
             onClick={() => onSetStart(currentFrame)}
             className="border-[#30383c] bg-[#111416] text-xs text-[#EDF1EE] hover:bg-[#30383c]"
           >
-            <ArrowLeftToLine className="mr-1 h-3.5 w-3.5 text-[#79CDD0]" />
+            <FontAwesomeIcon icon={faBackwardStep} className="mr-1 h-3.5 w-3.5 text-[#79CDD0]" />
             Ambil Awal ({formatTime(startFrame)})
           </Button>
 
@@ -149,7 +161,7 @@ export const SourcePlayer: React.FC<SourcePlayerProps> = ({
             onClick={() => onSetMoment(currentFrame)}
             className="border-[#30383c] bg-[#111416] text-xs text-[#EDF1EE] hover:bg-[#30383c]"
           >
-            <Flag className="mr-1 h-3.5 w-3.5 text-[#FFC879]" />
+            <FontAwesomeIcon icon={faFlag} className="mr-1 h-3.5 w-3.5 text-[#FFC879]" />
             Tandai Momen ({formatTime(momentFrame)})
           </Button>
 
@@ -159,7 +171,7 @@ export const SourcePlayer: React.FC<SourcePlayerProps> = ({
             onClick={() => onSetEnd(currentFrame)}
             className="border-[#30383c] bg-[#111416] text-xs text-[#EDF1EE] hover:bg-[#30383c]"
           >
-            <ArrowRightToLine className="mr-1 h-3.5 w-3.5 text-[#79CDD0]" />
+            <FontAwesomeIcon icon={faForwardStep} className="mr-1 h-3.5 w-3.5 text-[#79CDD0]" />
             Ambil Akhir ({formatTime(endFrame)})
           </Button>
         </div>

@@ -5,7 +5,8 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faXmark } from "@fortawesome/free-solid-svg-icons"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -70,8 +71,7 @@ function DialogContent({
               />
             }
           >
-            <XIcon
-            />
+            <FontAwesomeIcon icon={faXmark} className="size-4" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

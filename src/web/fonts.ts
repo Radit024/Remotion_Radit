@@ -1,8 +1,14 @@
-import { Sora, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
+import { Sora, Plus_Jakarta_Sans, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
 
 export const sora = Sora({
   subsets: ["latin"],
   variable: "--font-sora",
+  display: "swap",
+});
+
+export const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
   display: "swap",
 });
 

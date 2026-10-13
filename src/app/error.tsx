@@ -11,7 +11,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("moment-lab error boundary:", error.message);
+    console.error("takefield-studio error boundary:", error.message);
   }, [error]);
 
   return (

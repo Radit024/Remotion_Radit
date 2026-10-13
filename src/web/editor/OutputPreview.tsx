@@ -7,7 +7,8 @@ import type { Edit } from "@/shared/edit";
 import { CANVAS, FPS } from "@/shared/edit";
 import { compileEdit } from "@/shared/timeline";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
 type OutputPreviewProps = {
   edit: Edit;
@@ -58,11 +59,11 @@ export const OutputPreview: React.FC<OutputPreviewProps> = ({
         >
           {showSafeArea ? (
             <>
-              <EyeOff className="mr-1 h-3 w-3" /> Sembunyikan Panduan
+              <FontAwesomeIcon icon={faEyeSlash} className="mr-1 h-3 w-3" /> Sembunyikan Panduan
             </>
           ) : (
             <>
-              <Eye className="mr-1 h-3 w-3" /> Panduan Area Aman
+              <FontAwesomeIcon icon={faEye} className="mr-1 h-3 w-3" /> Panduan Area Aman
             </>
           )}
         </Button>
