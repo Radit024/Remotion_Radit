@@ -16,11 +16,11 @@ export const AudioLayer: React.FC<Props> = ({ effects, assetUrls, sfxGain = 0.35
     <>
       {sfx.map((effect) => (
         <Sequence
-          key={effect.id}
+          key={`${effect.id}-${effect.segmentIndex}`}
           from={effect.startFrame}
           durationInFrames={Math.max(1, effect.endFrame - effect.startFrame)}
         >
-          <Audio src={assetUrls[effect.assetId as string]} trimBefore={0} volume={sfxGain} />
+          <Audio src={assetUrls[effect.assetId as string]} trimBefore={effect.sourceStartOffset} volume={sfxGain} />
         </Sequence>
       ))}
     </>

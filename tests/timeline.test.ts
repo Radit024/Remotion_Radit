@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { compileEdit, sourceFrameAt, buildSegments } from "../src/shared/timeline";
+import { compileEdit, sourceFrameAt, outputFrameAt, buildSegments } from "../src/shared/timeline";
 import type { Edit } from "../src/shared/edit";
 
 const edit: Edit = {
@@ -110,4 +110,83 @@ test("out of range output frame throws", () => {
   expect(() => sourceFrameAt(r, -1)).toThrow();
   expect(() => sourceFrameAt(r, r.durationFrames)).toThrow();
   expect(() => sourceFrameAt(r, 1.5)).toThrow();
+});
+
+test("source moment marker maps to its first normal occurrence with freeze and replay", () => {
+  const compiled = compileEdit(edit);
+  const outputMoment = outputFrameAt(compiled, edit.momentFrame);
+  expect(outputMoment).toBe(564);
+  expect(sourceFrameAt(compiled, outputMoment!)).toBe(edit.momentFrame);
+  const replay = compiled.segments.find((segment) => segment.kind === "replay")!;
+  expect(sourceFrameAt(compiled, replay.outputStart + edit.momentFrame - replay.sourceStart)).toBe(edit.momentFrame);
+  expect(outputFrameAt(compiled, edit.endFrame)).toBeNull();
+});
+
+test("compiled subtitle and effect track windows stay aligned to source through insertions", () => {
+  const compiled = compileEdit({ ...edit, effects: [
+    { id: "image", kind: "image", startFrame: 2952, endFrame: 2997, text: "", assetId: "sticker", strength: 1 },
+  ] });
+  for (const effect of compiled.effects) {
+    expect(sourceFrameAt(compiled, effect.startFrame)).toBeGreaterThanOrEqual(2952);
+    expect(sourceFrameAt(compiled, effect.startFrame)).toBeLessThan(2997);
+    expect(effect.endFrame).toBeLessThanOrEqual(compiled.durationFrames);
+  }
+  expect(compiled.effects.some((effect) => compiled.segments[effect.segmentIndex].kind === "replay")).toBe(true);
+});
+
+test("source-active image, reaction and subtitle ranges cover every frozen output frame", () => {
+  const compiled = compileEdit({ ...edit,
+    captions: [{ id: "caption", startFrame: 2952, endFrame: 2953, text: "Freeze cue", speaker: null }],
+    effects: [
+      { id: "image", kind: "image", startFrame: 2952, endFrame: 2953, text: "", assetId: "sticker", strength: 1 },
+      { id: "reaction", kind: "reaction", startFrame: 2952, endFrame: 2953, text: "WOW", assetId: null, strength: 1 },
+      { id: "ended", kind: "image", startFrame: 2951, endFrame: 2952, text: "", assetId: "sticker", strength: 1 },
+      { id: "later", kind: "image", startFrame: 2953, endFrame: 2954, text: "", assetId: "sticker", strength: 1 },
+    ],
+  });
+  const freezeIndex = compiled.segments.findIndex((segment) => segment.kind === "freeze");
+  const freeze = compiled.segments[freezeIndex];
+  expect(compiled.effects.filter((effect) => effect.segmentIndex === freezeIndex).map((effect) => effect.id)).toEqual(["image", "reaction"]);
+  for (let frame = freeze.outputStart; frame < freeze.outputStart + freeze.durationFrames; frame += 1) {
+    expect(sourceFrameAt(compiled, frame)).toBe(2952);
+    expect(compiled.effects.filter((effect) => effect.startFrame <= frame && frame < effect.endFrame).map((effect) => effect.id)).toEqual(["image", "reaction"]);
+    expect(compiled.captions.some((caption) => caption.startFrame <= frame && frame < caption.endFrame)).toBe(true);
+  }
+  expect(compiled.durationFrames).toBe(948);
+});
+
+test("SFX fragment offsets are relative to the original effect, including trim, replay and post-replay continuation", () => {
+  const compiled = compileEdit({ ...edit, effects: [
+    { id: "sound", kind: "sfx", startFrame: 2390, endFrame: 3300, text: "", assetId: "audio", strength: 1 },
+    { id: "at-moment", kind: "sfx", startFrame: 2952, endFrame: 3000, text: "", assetId: "audio", strength: 1 },
+  ] });
+  for (const effect of compiled.effects) {
+    const originalStart = effect.id === "sound" ? 2390 : 2952;
+    expect(effect.sourceStartOffset).toBe(sourceFrameAt(compiled, effect.startFrame) - originalStart);
+  }
+  const sound = compiled.effects.filter((effect) => effect.id === "sound");
+  expect(sound.map((effect) => effect.sourceStartOffset)).toEqual([10, 562, 562, 550, 586]);
+  const moment = compiled.effects.filter((effect) => effect.id === "at-moment");
+  expect(moment.map((effect) => effect.sourceStartOffset)).toEqual([0, 0, 0, 24]);
+  const replayIndex = compiled.segments.findIndex((segment) => segment.kind === "replay");
+  expect(sound.find((effect) => effect.segmentIndex === replayIndex)?.sourceStartOffset).toBe(550);
+});
+
+test("normal and replay visual ranges match the exact source/output mapping without changing segment compilation", () => {
+  const events: Edit["effects"] = [
+    { id: "before", kind: "image", startFrame: 2940, endFrame: 2952, text: "", assetId: "sticker", strength: 1 },
+    { id: "crossing", kind: "reaction", startFrame: 2948, endFrame: 2960, text: "WOW", assetId: null, strength: 1 },
+    { id: "after", kind: "image", startFrame: 2970, endFrame: 3000, text: "", assetId: "sticker", strength: 1 },
+  ];
+  const compiled = compileEdit({ ...edit, effects: events });
+  const baseline = compileEdit(edit);
+  expect(compiled.segments).toEqual(baseline.segments);
+  expect(compiled.durationFrames).toBe(baseline.durationFrames);
+  for (let output = 0; output < compiled.durationFrames; output += 1) {
+    const source = sourceFrameAt(compiled, output);
+    const expected = events.filter((effect) => effect.startFrame <= source && source < effect.endFrame).map((effect) => effect.id).sort();
+    const actual = compiled.effects.filter((effect) => effect.startFrame <= output && output < effect.endFrame).map((effect) => effect.id).sort();
+    expect(actual).toEqual(expected);
+    expect(sourceFrameAt(compiled, output)).toBe(sourceFrameAt(baseline, output));
+  }
 });

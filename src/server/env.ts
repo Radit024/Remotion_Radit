@@ -5,6 +5,13 @@ export const projectRoot = process.cwd();
 
 export type SttProvider = "openrouter" | "9router" | "openai";
 
+export type AiCapabilityConfig = {
+  enabled: boolean;
+  credentialPresent: boolean;
+  modelConfigured: boolean;
+  issues: string[];
+};
+
 export type AiConfig = {
   enabled: boolean;
   apiKeyPresent: boolean;
@@ -15,6 +22,7 @@ export type AiConfig = {
   sttBaseUrl: string;
   sttApiKey: string;
   sttApiKeyPresent: boolean;
+  capabilities: { stt: AiCapabilityConfig; suggestions: AiCapabilityConfig };
   issues: string[];
 };
 
@@ -91,28 +99,42 @@ export function aiConfig(): AiConfig {
     readEnv("OPENROUTER_TRANSCRIPTION_LANGUAGE") ||
     "id";
 
-  const issues: string[] = [];
-
-  if (!enabled) {
-    issues.push("Dukungan AI OpenRouter dinonaktifkan sementara.");
-  } else {
-    if (!readEnv("OPENROUTER_API_KEY") && sttProvider === "openrouter") {
-      issues.push("OPENROUTER_API_KEY belum diisi");
-    }
-    if (!suggestionModel) {
-      issues.push("OPENROUTER_SUGGESTION_MODEL belum diisi");
-    }
-    if (!transcriptionModel) {
-      if (sttProvider === "9router") {
-        issues.push("STT_MODEL atau OPENROUTER_TRANSCRIPTION_MODEL belum diisi");
-      } else {
-        issues.push("OPENROUTER_TRANSCRIPTION_MODEL belum diisi");
-      }
-    }
-  }
-
   const sttApiKeyPresent = Boolean(sttApiKey);
   const openrouterKeyPresent = Boolean(readEnv("OPENROUTER_API_KEY"));
+  const stt: AiCapabilityConfig = {
+    enabled,
+    credentialPresent: sttApiKeyPresent,
+    modelConfigured: Boolean(transcriptionModel),
+    issues: [],
+  };
+  const suggestions: AiCapabilityConfig = {
+    enabled,
+    credentialPresent: openrouterKeyPresent,
+    modelConfigured: Boolean(suggestionModel),
+    issues: [],
+  };
+
+  if (!enabled) {
+    stt.issues.push("AI nonaktif — edit manual tersedia");
+    suggestions.issues.push("AI nonaktif — edit manual tersedia");
+  } else {
+    if (!stt.credentialPresent) stt.issues.push("Kredensial STT belum diisi");
+    if (!stt.modelConfigured) stt.issues.push("Model STT belum diisi");
+    if (rawSttProvider && !["openrouter", "9router", "ninerouter", "openai"].includes(rawSttProvider)) {
+      stt.issues.push("STT_PROVIDER tidak dikenali");
+    }
+    try {
+      const endpoint = new URL(sttBaseUrl);
+      if (!["http:", "https:"].includes(endpoint.protocol) || endpoint.username || endpoint.password) {
+        stt.issues.push("Konfigurasi endpoint STT tidak valid");
+      }
+    } catch {
+      stt.issues.push("Konfigurasi endpoint STT tidak valid");
+    }
+    if (!suggestions.credentialPresent) suggestions.issues.push("Kredensial saran AI belum diisi");
+    if (!suggestions.modelConfigured) suggestions.issues.push("Model saran AI belum diisi");
+  }
+  const issues = [...new Set([...stt.issues, ...suggestions.issues])];
   const apiKeyPresent =
     enabled &&
     (sttProvider === "9router"
@@ -129,6 +151,7 @@ export function aiConfig(): AiConfig {
     sttBaseUrl,
     sttApiKey,
     sttApiKeyPresent: enabled && sttApiKeyPresent,
+    capabilities: { stt, suggestions },
     issues,
   };
 }

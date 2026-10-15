@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { guardRead, guardMutation, apiErrorResponse, ApiError } from "@/server/guard";
-import { importAssetFromRequest, listAssets, toPublicAsset } from "@/server/assets";
+import { importAssetFromRequest, listAssets, materializeEmojiAssets, toPublicAsset } from "@/server/assets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     guardRead(request);
+    await materializeEmojiAssets();
     const assets = listAssets().map(toPublicAsset);
     return NextResponse.json({ assets }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

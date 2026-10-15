@@ -9,3 +9,4 @@ test-output
 .agents
 
 scripts/verify-assets.mjs
+docs

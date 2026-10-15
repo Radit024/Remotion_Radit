@@ -27,7 +27,10 @@ export async function GET(request: Request) {
         ffmpeg: ffmpegOk,
         ai: {
           enabled: ai.enabled,
-          configured: ai.apiKeyPresent,
+          configured: Object.values(ai.capabilities).every(
+            (capability) => capability.enabled && capability.credentialPresent && capability.modelConfigured && capability.issues.length === 0,
+          ),
+          capabilities: ai.capabilities,
           suggestionModel: ai.suggestionModel,
           transcriptionModel: ai.transcriptionModel,
           sttProvider: ai.sttProvider,

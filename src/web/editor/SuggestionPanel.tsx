@@ -1,17 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faWandMagicSparkles,
-  faCheck,
-  faXmark,
-  faBolt,
-} from "@fortawesome/free-solid-svg-icons";
+import { faWandMagicSparkles, faCheck, faXmark, faBolt } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
-import type { Effect } from "@/shared/edit";
 import type { Suggestion } from "@/shared/suggestions";
-import { FPS } from "@/shared/edit";
+import { formatTimecode } from "@/shared/edit";
 
 type SuggestionPanelProps = {
   suggestions: Suggestion[];
@@ -19,99 +13,40 @@ type SuggestionPanelProps = {
   onDismissSuggestion: (id: string) => void;
   onTriggerSuggestions: () => void;
   isLoading: boolean;
+  /** True only when the parent has confirmed that AI configuration is ready. */
   aiEnabled?: boolean;
+  aiStatusLabel?: string;
 };
 
 export const SuggestionPanel: React.FC<SuggestionPanelProps> = ({
-  suggestions,
-  onApplySuggestion,
-  onDismissSuggestion,
-  onTriggerSuggestions,
-  isLoading,
-  aiEnabled = false,
+  suggestions, onApplySuggestion, onDismissSuggestion, onTriggerSuggestions, isLoading, aiEnabled = false, aiStatusLabel,
 }) => {
-  const formatSec = (frame: number) => (frame / FPS).toFixed(2);
-
+  const id = useId();
+  const aiReady = aiEnabled === true;
   return (
-    <div className="flex flex-col gap-3 text-xs text-[#EDF1EE]">
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-[#A9B4B1]">Saran AI (Efek & Reaksi)</span>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={onTriggerSuggestions}
-          disabled={!aiEnabled || isLoading}
-          title={
-            aiEnabled
-              ? "Minta saran efek dan teks reaksi dari transkripsi"
-              : "Dukungan AI OpenRouter sedang dinonaktifkan sementara. Efek dapat ditambahkan manual melalui Preset dan Stiker."
-          }
-          className={`border-[#D4F77C]/40 bg-[#111416] text-xs ${
-            !aiEnabled
-              ? "cursor-not-allowed opacity-50 text-[#A9B4B1] border-[#30383c]"
-              : "text-[#D4F77C] hover:bg-[#D4F77C]/10"
-          }`}
-        >
-          <FontAwesomeIcon icon={faWandMagicSparkles} className="mr-1.5 h-3.5 w-3.5" />
-          {isLoading ? "Menganalisis..." : aiEnabled ? "Minta Saran AI" : "AI Nonaktif"}
+    <section aria-labelledby={`${id}-title`} className="editor-panel flex min-w-0 flex-col gap-3 type-control text-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id={`${id}-title`} className="type-panel-title">Saran AI (Efek & Reaksi)</h2>
+        <Button type="button" size="sm" variant="outline" onClick={onTriggerSuggestions} disabled={!aiReady || isLoading} aria-describedby={`${id}-status`} className="type-control">
+          <FontAwesomeIcon aria-hidden="true" icon={faWandMagicSparkles} /> {isLoading ? "Menganalisis…" : "Minta Saran AI"}
         </Button>
       </div>
-
-      <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pr-1">
-        {suggestions.length === 0 ? (
-          <div className="rounded border border-dashed border-[#30383c] p-4 text-center text-[#A9B4B1]">
-            {!aiEnabled
-              ? "Dukungan AI OpenRouter dinonaktifkan sementara. Anda dapat mengatur preset efek zoom/shake dan menambahkan stiker/SFX secara langsung pada panel sebelah kiri."
-              : "Belum ada saran efek AI. Klik tombol di atas untuk menganalisis momen dan subtitle."}
-          </div>
-        ) : (
-          suggestions.map((sug) => (
-            <div
-              key={sug.id}
-              className="flex flex-col gap-2 rounded border border-[#30383c] bg-[#111416] p-2.5 text-xs"
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 font-semibold text-[#FFC879]">
-                  <FontAwesomeIcon icon={faBolt} className="h-3 w-3" />
-                  {sug.kind.toUpperCase()}{" "}
-                  <span className="font-mono text-[10px] text-[#A9B4B1]">
-                    ({formatSec(sug.startFrame)}s - {formatSec(sug.endFrame)}s)
-                  </span>
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onApplySuggestion(sug)}
-                    className="h-6 border-[#D4F77C]/50 bg-transparent px-2 text-[11px] text-[#D4F77C] hover:bg-[#D4F77C]/10"
-                  >
-                    <FontAwesomeIcon icon={faCheck} className="mr-1 h-2.5 w-2.5" /> Terapkan
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDismissSuggestion(sug.id)}
-                    className="h-6 w-6 p-0 text-[#A9B4B1] hover:text-rose-400"
-                  >
-                    <FontAwesomeIcon icon={faXmark} className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-
-              {sug.text && (
-                <div className="rounded bg-[#191e21] px-2 py-1 font-mono text-[11px] text-[#EDF1EE]">
-                  "{sug.text}"
-                </div>
-              )}
-
-              <p className="text-[11px] text-[#A9B4B1]">{sug.reason}</p>
+      <p id={`${id}-status`} role="status" className="type-help text-muted-foreground">{aiStatusLabel ?? (aiReady ? "AI siap. Saran dapat ditinjau sebelum diterapkan." : "AI belum tersedia. Preset, stiker dan SFX tetap dapat digunakan manual.")}</p>
+      {isLoading && <p role="status" className="type-help text-muted-foreground">Menganalisis momen dan subtitle…</p>}
+      {suggestions.length === 0 ? (aiReady && !isLoading ? <p className="type-help text-muted-foreground">Belum ada saran. Minta analisis momen dan subtitle dengan tombol di atas.</p> : null) : (
+        <div className="panel-scroll flex max-h-96 flex-col gap-3 pr-1">
+          {suggestions.map((suggestion, index) => <div key={suggestion.id} className="flex min-w-0 flex-col gap-2 rounded border border-border bg-background p-3">
+            <span className="flex items-center gap-2 font-semibold text-track-moment"><FontAwesomeIcon aria-hidden="true" icon={faBolt} /> {suggestion.kind.toUpperCase()}</span>
+            <span className="type-timecode text-muted-foreground">{formatTimecode(suggestion.startFrame)}–{formatTimecode(suggestion.endFrame)}</span>
+            {suggestion.text && <p className="break-words font-reaction text-lg">“{suggestion.text}”</p>}
+            <p className="type-help text-muted-foreground">{suggestion.reason}</p>
+            <div className="flex items-center justify-between gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={() => onApplySuggestion(suggestion)} aria-label={`Terapkan saran ${index + 1}`} className="type-control text-primary"><FontAwesomeIcon aria-hidden="true" icon={faCheck} /> Terapkan</Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => onDismissSuggestion(suggestion.id)} aria-label={`Abaikan saran ${index + 1}`} title={`Abaikan saran ${index + 1}`} className="text-muted-foreground hover:text-rose-400"><FontAwesomeIcon aria-hidden="true" icon={faXmark} /></Button>
             </div>
-          ))
-        )}
-      </div>
-    </div>
+          </div>)}
+        </div>
+      )}
+    </section>
   );
 };

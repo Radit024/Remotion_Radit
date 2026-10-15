@@ -2,5 +2,86 @@
   "version": "1.0.0",
   "name": "twemoji-local-manifest",
   "license": "CC-BY-4.0",
-  "emojis": []
+  "licenseFile": "LICENSE-GRAPHICS",
+  "attribution": "Twemoji graphics by Twitter and contributors, maintained by Jason Sofonia and Justine De Caires, licensed under CC BY 4.0.",
+  "attributionFile": "ATTRIBUTION.txt",
+  "provenance": {
+    "repository": "https://github.com/jdecked/twemoji",
+    "tag": "v17.0.3",
+    "commit": "b6b55fef1e8636b540a6d016a4729ca8cdf2e60b"
+  },
+  "emojis": [
+    {
+      "id": "joy",
+      "codepoint": "1f602",
+      "name": "Tertawa sampai menangis",
+      "file": "1f602.png",
+      "sha256": "eb12f849bfef3b0deec5b019248ab2a58bbd1d876a83ab8796afb338811ad918",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f602.svg",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "rofl",
+      "codepoint": "1f923",
+      "name": "Tertawa terguling",
+      "file": "1f923.png",
+      "sha256": "4fef2b8bbdf88a5d1321cdc08a11301add5ecb6b2d5a25af7515821b1b9be837",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f923.svg",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "skull",
+      "codepoint": "1f480",
+      "name": "Tengkorak",
+      "file": "1f480.png",
+      "sha256": "a51f08dfa9ebd192fbcbf7da7bd2f675b95227491dcb6b417fce19cdf81c9e9c",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f480.svg",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "sob",
+      "codepoint": "1f62d",
+      "name": "Menangis keras",
+      "file": "1f62d.png",
+      "sha256": "e6f6daa61fe5abf4e5b4580778eba1b023f9ba3101daf0920567ac7f11efa296",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f62d.svg",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "open-mouth",
+      "codepoint": "1f62e",
+      "name": "Terkejut",
+      "file": "1f62e.png",
+      "sha256": "83f78f65f96aaeb54a76a0a763ddb629dac2f7ac33f9966e88c0a3135fb633aa",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f62e.svg",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "rage",
+      "codepoint": "1f621",
+      "name": "Marah",
+      "file": "1f621.png",
+      "sha256": "a9debafb75a502663800a516355125e387625e2b53d24fa1fd7117501f9c6d39",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f621.svg",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "fire",
+      "codepoint": "1f525",
+      "name": "Api",
+      "file": "1f525.png",
+      "sha256": "b0ca9628471938b41957d1c3a99d44620235515f2a05614391605b4974339c01",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f525.svg",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "id": "clap",
+      "codepoint": "1f44f",
+      "name": "Tepuk tangan",
+      "file": "1f44f.png",
+      "sha256": "21f4c43b6ad8e8ba00ffa546bf53b0cebcf5cb4c1ab54b7beec9e16ec391c93d",
+      "source": "https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f44f.svg",
+      "license": "CC-BY-4.0"
+    }
+  ]
 }

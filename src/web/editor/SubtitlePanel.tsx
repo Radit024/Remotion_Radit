@@ -1,18 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPlus,
-  faTrashCan,
-  faUpload,
-  faDownload,
-  faWandMagicSparkles,
-} from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faTrashCan, faUpload, faDownload, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Caption } from "@/shared/edit";
-import { FPS, toFrame } from "@/shared/edit";
+import { FPS, LIMITS, formatTimecode, parseTimecode, toSeconds } from "@/shared/edit";
 
 type SubtitlePanelProps = {
   captions: Caption[];
@@ -21,258 +15,174 @@ type SubtitlePanelProps = {
   isTranscribing: boolean;
   startFrame: number;
   endFrame: number;
+  /** True only when the parent has confirmed that AI configuration is ready. */
   aiEnabled?: boolean;
+  aiStatusLabel?: string;
+  /** Use the project/draft identity when this panel stays mounted across projects. */
+  importScopeKey?: string;
 };
 
 export const SubtitlePanel: React.FC<SubtitlePanelProps> = ({
-  captions,
-  onChangeCaptions,
-  onTriggerAiTranscribe,
-  isTranscribing,
-  startFrame,
-  endFrame,
-  aiEnabled = false,
+  captions, onChangeCaptions, onTriggerAiTranscribe, isTranscribing, startFrame, endFrame, aiEnabled = false, aiStatusLabel, importScopeKey,
 }) => {
+  const id = useId();
+  const importRef = useRef<HTMLInputElement>(null);
+  const importing = useRef(false);
+  const readerRef = useRef<FileReader | null>(null);
+  const live = useRef(true);
+  const importLifetime = useRef(0);
+  const latest = useRef({ captions, startFrame, endFrame, onChangeCaptions, importScopeKey });
+  useLayoutEffect(() => {
+    const previous = latest.current;
+    if (previous.startFrame !== startFrame || previous.endFrame !== endFrame || previous.importScopeKey !== importScopeKey) {
+      importLifetime.current += 1;
+    }
+    latest.current = { captions, startFrame, endFrame, onChangeCaptions, importScopeKey };
+  }, [captions, startFrame, endFrame, onChangeCaptions, importScopeKey]);
+  useEffect(() => {
+    live.current = true;
+    return () => {
+      live.current = false;
+      importLifetime.current += 1;
+      readerRef.current?.abort();
+    };
+  }, []);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const [newText, setNewText] = useState("");
   const [newSpeaker, setNewSpeaker] = useState("");
-
-  const formatSec = (frame: number) => (frame / FPS).toFixed(2);
-
+  const aiReady = aiEnabled === true;
+  const canAdd = !isImporting && newText.trim().length > 0 && endFrame > startFrame && captions.length < LIMITS.captionsMax;
   const addCaption = () => {
-    if (!newText.trim()) return;
-    const item: Caption = {
+    if (!canAdd || importing.current) return;
+    onChangeCaptions([...captions, {
       id: `cap-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      startFrame,
-      endFrame: Math.min(endFrame, startFrame + 90), // default 3 detik
-      text: newText.trim(),
-      speaker: newSpeaker.trim() || null,
-    };
-    onChangeCaptions([...captions, item]);
+      startFrame, endFrame: Math.min(endFrame, startFrame + FPS * 3),
+      text: newText.trim(), speaker: newSpeaker.trim() || null,
+    }]);
     setNewText("");
     setNewSpeaker("");
   };
-
-  const removeCaption = (id: string) => {
-    onChangeCaptions(captions.filter((c) => c.id !== id));
-  };
-
-  const updateCaption = (id: string, partial: Partial<Caption>) => {
-    onChangeCaptions(
-      captions.map((c) => (c.id === id ? { ...c, ...partial } : c)),
-    );
-  };
-
-  const handleImportSrt = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (!text) return;
-      const parsed = parseSrtText(text, startFrame);
-      if (parsed.length > 0) {
-        onChangeCaptions([...captions, ...parsed]);
+  const handleImportSrt = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file || importing.current) return;
+    importing.current = true;
+    const context = latest.current;
+    const lifetime = importLifetime.current;
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        readerRef.current = reader;
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(new Error("Berkas SRT tidak dapat dibaca."));
+        reader.onabort = () => reject(new Error("Pembacaan SRT dibatalkan."));
+        reader.readAsText(file);
+      });
+      if (!live.current) return;
+      if (lifetime !== importLifetime.current) {
+        throw new Error("Rentang atau proyek berubah selama pembacaan. Impor ulang SRT untuk rentang/proyek saat ini; subtitle yang ada tidak diubah.");
       }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
+      const current = latest.current;
+      const parsed = parseSrtText(text, context.startFrame)
+        .map((caption) => ({ ...caption, endFrame: Math.min(context.endFrame, caption.endFrame) }))
+        .filter((caption) => caption.startFrame < caption.endFrame);
+      if (!parsed.length) throw new Error("Tidak ada cue SRT valid dalam rentang terpilih. Periksa timestamp dan isi berkas.");
+      if (current.captions.length + parsed.length > LIMITS.captionsMax) throw new Error(`Maksimum ${LIMITS.captionsMax} cue subtitle per proyek.`);
+      current.onChangeCaptions([...current.captions, ...parsed]);
+    } catch (error) {
+      if (live.current) setImportError(`Gagal mengimpor SRT: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      importing.current = false;
+      readerRef.current = null;
+      if (live.current) setIsImporting(false);
+      input.value = "";
+    }
   };
-
   const handleExportSrt = () => {
-    const srt = exportSrtText(captions);
-    const blob = new Blob([srt], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([exportSrtText(captions)], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "subtitles.srt";
-    a.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "subtitles.srt";
+    link.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="flex flex-col gap-3 text-xs text-[#EDF1EE]">
-      {/* Header Actions */}
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-[#A9B4B1]">Daftar Subtitle ({captions.length})</span>
-        <div className="flex items-center gap-1.5">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onTriggerAiTranscribe}
-            disabled={!aiEnabled || isTranscribing}
-            title={
-              aiEnabled
-                ? "Minta transkripsi suara otomatis dari audio rentang terpilih"
-                : "Dukungan AI OpenRouter sedang dinonaktifkan sementara. Gunakan input manual atau tombol Impor SRT."
-            }
-            className={`border-[#D4F77C]/40 bg-[#111416] text-xs ${
-              !aiEnabled
-                ? "cursor-not-allowed opacity-50 text-[#A9B4B1] border-[#30383c]"
-                : "text-[#D4F77C] hover:bg-[#D4F77C]/10"
-            }`}
-          >
-            <FontAwesomeIcon icon={faWandMagicSparkles} className="mr-1.5 h-3.5 w-3.5" />
-            {isTranscribing ? "Mentranskripsi..." : aiEnabled ? "AI STT" : "AI STT (Nonaktif)"}
-          </Button>
-
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-[#30383c] bg-[#111416] p-2 text-[#A9B4B1] hover:bg-[#30383c]">
-            <input
-              type="file"
-              accept=".srt"
-              className="hidden"
-              onChange={handleImportSrt}
-            />
-            <FontAwesomeIcon icon={faUpload} className="h-3.5 w-3.5" />
-          </label>
-
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleExportSrt}
-            disabled={captions.length === 0}
-            className="border-[#30383c] bg-[#111416] text-[#A9B4B1] hover:bg-[#30383c]"
-          >
-            <FontAwesomeIcon icon={faDownload} className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Add New Caption Form */}
-      <div className="flex flex-col gap-2 rounded border border-[#30383c] bg-[#111416] p-2.5">
-        <div className="grid grid-cols-3 gap-2">
-          <Input
-            placeholder="Pembicara (opsional)"
-            value={newSpeaker}
-            onChange={(e) => setNewSpeaker(e.target.value)}
-            className="h-8 border-[#30383c] bg-[#191e21] text-xs"
-          />
-          <Input
-            placeholder="Teks subtitle..."
-            value={newText}
-            onChange={(e) => setNewText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addCaption();
-            }}
-            className="col-span-2 h-8 border-[#30383c] bg-[#191e21] text-xs"
-          />
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          onClick={addCaption}
-          disabled={!newText.trim()}
-          className="h-7 bg-[#30383c] text-xs text-[#EDF1EE] hover:bg-[#404a50]"
-        >
-          <FontAwesomeIcon icon={faPlus} className="mr-1 h-3 w-3" />
-          Tambah Cue Subtitle
+    <section aria-labelledby={`${id}-title`} aria-busy={isImporting} className="editor-panel flex min-w-0 flex-col gap-3 type-control text-foreground">
+      <h2 id={`${id}-title`} className="type-panel-title">Daftar Subtitle ({captions.length})</h2>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={onTriggerAiTranscribe} disabled={!aiReady || isTranscribing || isImporting} aria-describedby={`${id}-ai-status`} className="type-control">
+          <FontAwesomeIcon aria-hidden="true" icon={faWandMagicSparkles} /> {isTranscribing ? "Mentranskripsi…" : "AI STT"}
+        </Button>
+        <input ref={importRef} type="file" accept=".srt" aria-label="Berkas SRT" className="hidden" onChange={(event) => void handleImportSrt(event)} disabled={isImporting} />
+        <Button type="button" size="sm" variant="outline" onClick={() => importRef.current?.click()} disabled={isImporting} className="type-control">
+          <FontAwesomeIcon aria-hidden="true" icon={faUpload} /> {isImporting ? "Mengimpor SRT…" : "Impor SRT"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={handleExportSrt} disabled={captions.length === 0} className="type-control">
+          <FontAwesomeIcon aria-hidden="true" icon={faDownload} /> Ekspor SRT
         </Button>
       </div>
-
-      {/* List of Captions */}
-      <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pr-1">
-        {captions.length === 0 ? (
-          <div className="rounded border border-dashed border-[#30383c] p-4 text-center text-[#A9B4B1]">
-            Belum ada subtitle. Tulis manual, unggah berkas .srt, atau jalankan Transkripsi AI.
-          </div>
-        ) : (
-          captions.map((cap) => (
-            <div
-              key={cap.id}
-              className="flex flex-col gap-1.5 rounded border border-[#30383c] bg-[#111416] p-2 text-xs"
-            >
-              <div className="flex items-center justify-between gap-1 text-[11px] text-[#A9B4B1]">
-                <div className="flex items-center gap-1">
-                  <span className="font-mono text-[#79CDD0]">
-                    {formatSec(cap.startFrame)}s - {formatSec(cap.endFrame)}s
-                  </span>
-                  {cap.speaker && (
-                    <span className="rounded bg-[#30383c] px-1 text-[10px] text-[#EDF1EE]">
-                      {cap.speaker}
-                    </span>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => removeCaption(cap.id)}
-                  className="h-6 w-6 p-0 text-[#A9B4B1] hover:text-rose-400"
-                >
-                  <FontAwesomeIcon icon={faTrashCan} className="h-3 w-3" />
-                </Button>
-              </div>
-
-              <Input
-                value={cap.text}
-                onChange={(e) => updateCaption(cap.id, { text: e.target.value })}
-                className="h-7 border-[#30383c] bg-[#191e21] text-xs"
-              />
-            </div>
-          ))
-        )}
+      <p id={`${id}-ai-status`} className="type-help text-muted-foreground">{aiStatusLabel ?? (aiReady ? "AI siap. Transkripsi menggunakan audio rentang terpilih." : "AI belum tersedia. Gunakan input manual atau Impor SRT.")}</p>
+      <p className="type-help text-muted-foreground">Timestamp SRT impor dimulai dari awal rentang terpilih; ekspor memakai waktu sumber.</p>
+      {isImporting && <p role="status" className="type-help text-muted-foreground">Impor SRT sedang dibaca. Pengeditan subtitle dan AI dikunci sampai selesai; perubahan rentang atau proyek akan membatalkan penerapan impor.</p>}
+      {importError && <p role="alert" className="type-help text-rose-400">{importError}</p>}
+      <div className="flex flex-col gap-2 rounded border border-border bg-background p-3">
+        <label htmlFor={`${id}-speaker`} className="type-control text-muted-foreground">Pembicara (opsional)</label>
+        <Input id={`${id}-speaker`} disabled={isImporting} value={newSpeaker} maxLength={LIMITS.speakerMax} onChange={(event) => setNewSpeaker(event.target.value)} className="h-9 border-border bg-card text-sm" />
+        <label htmlFor={`${id}-text`} className="type-control text-muted-foreground">Teks subtitle baru</label>
+        <Input id={`${id}-text`} disabled={isImporting} value={newText} maxLength={LIMITS.captionMax} onChange={(event) => setNewText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCaption(); } }} className="h-9 border-border bg-card text-sm" />
+        <Button type="button" size="sm" onClick={addCaption} disabled={!canAdd} className="h-auto min-h-9 whitespace-normal type-control">
+          <FontAwesomeIcon aria-hidden="true" icon={faPlus} /> Tambah Cue Subtitle
+        </Button>
       </div>
-    </div>
+      <div className="panel-scroll flex max-h-80 flex-col gap-3 pr-1">
+        {captions.length === 0 ? <p className="rounded border border-dashed border-border p-4 type-help text-muted-foreground">Belum ada subtitle. Tulis manual atau impor berkas .srt.</p> : captions.map((caption, index) => (
+          <div key={caption.id} className="flex min-w-0 flex-col gap-2 rounded border border-border bg-background p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="type-timecode text-track-subtitle">{formatTimecode(caption.startFrame)}–{formatTimecode(caption.endFrame)}</span>
+              {caption.speaker && <span className="rounded bg-muted px-1 type-metadata">{caption.speaker}</span>}
+              <Button type="button" size="sm" variant="ghost" disabled={isImporting} onClick={() => { if (!importing.current) onChangeCaptions(captions.filter((item) => item.id !== caption.id)); }} aria-label={`Hapus subtitle ${index + 1}`} title={`Hapus subtitle ${index + 1}`} className="text-muted-foreground hover:text-rose-400">
+                <FontAwesomeIcon aria-hidden="true" icon={faTrashCan} />
+              </Button>
+            </div>
+            <label htmlFor={`${id}-cue-${caption.id}`} className="sr-only">Teks subtitle {index + 1}</label>
+            <Input id={`${id}-cue-${caption.id}`} disabled={isImporting} value={caption.text} maxLength={LIMITS.captionMax} onChange={(event) => { if (!importing.current) onChangeCaptions(captions.map((item) => item.id === caption.id ? { ...item, text: event.target.value } : item)); }} className="h-9 border-border bg-card text-sm" />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 };
 
-// Helper SRT parser
-function parseSrtText(srt: string, offsetFrame = 0): Caption[] {
-  const blocks = srt.replace(/\r/g, "").split(/\n\n+/);
+export function parseSrtText(srt: string, offsetFrame = 0): Caption[] {
   const result: Caption[] = [];
-
-  for (const block of blocks) {
+  for (const block of srt.replace(/\r/g, "").split(/\n\s*\n/)) {
     const lines = block.trim().split("\n");
-    if (lines.length < 2) continue;
-    const timeLineIndex = lines[0].includes("-->") ? 0 : 1;
-    const timeLine = lines[timeLineIndex];
-    if (!timeLine || !timeLine.includes("-->")) continue;
-
-    const [startRaw, endRaw] = timeLine.split("-->").map((s) => s.trim());
-    const startSec = parseSrtTimestamp(startRaw);
-    const endSec = parseSrtTimestamp(endRaw);
-    if (startSec === null || endSec === null) continue;
-
-    const textLines = lines.slice(timeLineIndex + 1).join(" ").trim();
-    if (!textLines) continue;
-
-    result.push({
-      id: `srt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      startFrame: offsetFrame + toFrame(startSec),
-      endFrame: offsetFrame + toFrame(endSec),
-      text: textLines.slice(0, 160),
-      speaker: null,
-    });
+    const timeLineIndex = lines[0]?.includes("-->") ? 0 : 1;
+    const parts = lines[timeLineIndex]?.split("-->").map((value) => value.trim());
+    if (!parts || parts.length !== 2) continue;
+    const parseTimestamp = (value: string) => {
+      const match = /^(\d+):([0-5]\d):([0-5]\d)[,.](\d{1,3})$/.exec(value);
+      return match ? parseTimecode(`${Number(match[1]) * 60 + Number(match[2])}:${match[3]}.${match[4]}`) : NaN;
+    };
+    const start = parseTimestamp(parts[0]);
+    const end = parseTimestamp(parts[1]);
+    const text = lines.slice(timeLineIndex + 1).join(" ").trim();
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start >= end || !text) continue;
+    result.push({ id: `srt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, startFrame: offsetFrame + start, endFrame: offsetFrame + end, text: text.slice(0, LIMITS.captionMax), speaker: null });
   }
   return result;
 }
 
-function parseSrtTimestamp(str: string): number | null {
-  const match = /^(\d+):(\d+):(\d+)[,\.](\d+)$/.exec(str);
-  if (!match) return null;
-  const h = Number(match[1]);
-  const m = Number(match[2]);
-  const s = Number(match[3]);
-  const ms = Number(match[4].padEnd(3, "0").slice(0, 3));
-  return h * 3600 + m * 60 + s + ms / 1000;
-}
-
-function exportSrtText(captions: Caption[]): string {
-  return captions
-    .map((c, i) => {
-      const start = formatSrtTime(c.startFrame / FPS);
-      const end = formatSrtTime(c.endFrame / FPS);
-      const speakerPrefix = c.speaker ? `${c.speaker}: ` : "";
-      return `${i + 1}\n${start} --> ${end}\n${speakerPrefix}${c.text}\n`;
-    })
-    .join("\n");
-}
-
-function formatSrtTime(sec: number): string {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = Math.floor(sec % 60);
-  const ms = Math.floor((sec % 1) * 1000);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
+export function exportSrtText(captions: Caption[]): string {
+  const formatSrtTime = (frame: number) => {
+    const milliseconds = Math.round(toSeconds(frame) * 1000);
+    const seconds = Math.floor(milliseconds / 1000);
+    return `${String(Math.floor(seconds / 3600)).padStart(2, "0")}:${String(Math.floor(seconds / 60) % 60).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")},${String(milliseconds % 1000).padStart(3, "0")}`;
+  };
+  return captions.map((caption, index) => `${index + 1}\n${formatSrtTime(caption.startFrame)} --> ${formatSrtTime(caption.endFrame)}\n${caption.speaker ? `${caption.speaker}: ` : ""}${caption.text}\n`).join("\n");
 }

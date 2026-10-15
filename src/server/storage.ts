@@ -71,6 +71,50 @@ export function writeJsonAtomic(filePath: string, value: unknown): void {
   }
 }
 
+export function writeJsonExclusive(filePath: string, value: unknown): void {
+  let stagingDir: string | undefined;
+  let handle: number | undefined;
+  try {
+    const payload = `${JSON.stringify(value, null, 2)}\n`;
+    const dir = path.dirname(filePath);
+    fs.mkdirSync(dir, { recursive: true });
+    stagingDir = fs.mkdtempSync(path.join(dir, ".publish-"));
+    const stagedPath = path.join(stagingDir, "data.json");
+    handle = fs.openSync(stagedPath, "wx");
+    fs.writeFileSync(handle, payload, "utf8");
+    fs.fsyncSync(handle);
+    fs.closeSync(handle);
+    handle = undefined;
+    try {
+      // Unlike rename, hard-link publication atomically refuses an existing destination.
+      fs.linkSync(stagedPath, filePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+        throw new StorageError("FILE_EXISTS", "Berkas tujuan sudah ada dan tidak diubah");
+      }
+      throw error;
+    }
+  } catch (error) {
+    if (error instanceof StorageError && error.code === "FILE_EXISTS") throw error;
+    throw new StorageError("DISK_WRITE_FAILED", "Gagal menerbitkan berkas baru; berkas yang sudah ada tidak diubah");
+  } finally {
+    if (handle !== undefined) {
+      try {
+        fs.closeSync(handle);
+      } catch {
+        /* best-effort cleanup */
+      }
+    }
+    if (stagingDir !== undefined) {
+      try {
+        fs.rmSync(stagingDir, { recursive: true, force: true });
+      } catch {
+        /* best-effort cleanup; never remove the published destination */
+      }
+    }
+  }
+}
+
 export function readJson<T>(filePath: string): T {
   const raw = fs.readFileSync(filePath, "utf8");
   return JSON.parse(raw) as T;

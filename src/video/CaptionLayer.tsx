@@ -1,7 +1,9 @@
 import React from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, cancelRender, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import type { CompiledCaption } from "../shared/timeline";
 import { SAFE_AREA } from "../shared/edit";
+import { CAPTION_FONT_STACK } from "../shared/typography";
+import { loadFonts } from "./load-fonts";
 
 type Props = {
   captions: CompiledCaption[];
@@ -10,6 +12,9 @@ type Props = {
 };
 
 export const CaptionLayer: React.FC<Props> = ({ captions, captionY, height }) => {
+  React.useEffect(() => {
+    void loadFonts().catch((error: unknown) => cancelRender(error instanceof Error ? error : new Error(String(error))));
+  }, []);
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   const active = captions.filter((caption) => caption.startFrame <= frame && frame < caption.endFrame);
@@ -35,7 +40,7 @@ export const CaptionLayer: React.FC<Props> = ({ captions, captionY, height }) =>
         void durationInFrames;
         return (
           <div
-            key={caption.id}
+            key={`${caption.id}-${caption.segmentIndex}`}
             style={{
               position: "absolute",
               left: SAFE_AREA.left,
@@ -53,7 +58,7 @@ export const CaptionLayer: React.FC<Props> = ({ captions, captionY, height }) =>
                 borderRadius: 14,
                 background: "rgba(10, 12, 13, 0.72)",
                 color: "#EDF1EE",
-                fontFamily: "Sora, sans-serif",
+                fontFamily: CAPTION_FONT_STACK,
                 fontWeight: 700,
                 fontSize: 58,
                 lineHeight: 1.16,

@@ -1,4 +1,5 @@
 import { continueRender, delayRender } from "remotion";
+import { CAPTION_FONT_FAMILY, REACTION_FONT_FAMILY, TIMECODE_FONT_FAMILY } from "../shared/typography";
 import sora400 from "@fontsource/sora/files/sora-latin-400-normal.woff2";
 import sora500 from "@fontsource/sora/files/sora-latin-500-normal.woff2";
 import sora600 from "@fontsource/sora/files/sora-latin-600-normal.woff2";
@@ -16,14 +17,14 @@ export type FontSpec = {
 };
 
 const FONTS: FontSpec[] = [
-  { family: "Sora", url: sora400, weight: 400 },
-  { family: "Sora", url: sora500, weight: 500 },
-  { family: "Sora", url: sora600, weight: 600 },
-  { family: "Sora", url: sora700, weight: 700 },
-  { family: "Sora", url: sora800, weight: 800 },
-  { family: "Barlow Condensed", url: barlowCondensed800, weight: 800 },
-  { family: "IBM Plex Mono", url: ibmPlexMono400, weight: 400 },
-  { family: "IBM Plex Mono", url: ibmPlexMono500, weight: 500 },
+  { family: CAPTION_FONT_FAMILY, url: sora400, weight: 400 },
+  { family: CAPTION_FONT_FAMILY, url: sora500, weight: 500 },
+  { family: CAPTION_FONT_FAMILY, url: sora600, weight: 600 },
+  { family: CAPTION_FONT_FAMILY, url: sora700, weight: 700 },
+  { family: CAPTION_FONT_FAMILY, url: sora800, weight: 800 },
+  { family: REACTION_FONT_FAMILY, url: barlowCondensed800, weight: 800 },
+  { family: TIMECODE_FONT_FAMILY, url: ibmPlexMono400, weight: 400 },
+  { family: TIMECODE_FONT_FAMILY, url: ibmPlexMono500, weight: 500 },
 ];
 
 let loaded = false;
@@ -53,8 +54,11 @@ export function loadFonts(): Promise<void> {
           document.fonts.add(face);
         }),
       );
-    } finally {
       loaded = true;
+    } catch (error) {
+      promise = null;
+      throw error;
+    } finally {
       continueRender(handle);
     }
   })();

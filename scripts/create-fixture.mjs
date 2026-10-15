@@ -2,7 +2,17 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-const targetDir = path.join(process.cwd(), ".data", "tmp");
+const configuredDataDir = process.env.DATA_DIR?.trim();
+if (!configuredDataDir && (process.env.CI || process.env.VITEST || process.env.NODE_ENV === "test")) {
+  throw new Error("[fixture] Set DATA_DIR to temporary storage for automated runs; .data fallback is manual only.");
+}
+const dataDir = configuredDataDir
+  ? path.resolve(process.cwd(), configuredDataDir)
+  : path.join(process.cwd(), ".data");
+if (!configuredDataDir) {
+  console.warn(`[fixture] Manual .data fallback: ${dataDir}`);
+}
+const targetDir = path.join(dataDir, "tmp");
 fs.mkdirSync(targetDir, { recursive: true });
 const targetFile = path.join(targetDir, "fixture-300s.mp4");
 

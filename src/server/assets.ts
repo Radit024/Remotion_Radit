@@ -1,14 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { Readable } from "node:stream";
 import Busboy from "busboy";
+import { z } from "zod";
 import type { Asset } from "@/shared/edit";
-import { dirs, maxUploadBytes } from "./env";
+import { dirs, maxUploadBytes, projectRoot } from "./env";
+import { withLock } from "./projects";
 import { ApiError } from "./guard";
 import { inspectMedia, needsPreviewProxy, type MediaKind } from "./media";
 import { runTool, ToolError } from "./process";
-import { readJsonIfExists, removeIfExists, storagePaths, writeJsonAtomic } from "./storage";
+import { isManagedPath, readJsonIfExists, removeIfExists, storagePaths, writeJsonAtomic } from "./storage";
 
 export type StoredAsset = Asset & {
   filename: string;
@@ -19,9 +21,12 @@ export type StoredAsset = Asset & {
   frameRate: number | null;
   proxyRelativePath: string | null;
   createdAt: string;
+  emojiManifestId?: string;
+  emojiSha256?: string;
 };
 
 const MANIFEST = "assets.json";
+const MANIFEST_LOCK = "asset-manifest";
 
 function manifestPath(): string {
   return path.join(dirs().assets, MANIFEST);
@@ -55,14 +60,23 @@ export function requireAsset(id: string): StoredAsset {
   return asset;
 }
 
-export function assetPath(asset: StoredAsset): string {
-  return path.join(dirs().assets, asset.relativePath);
+export function assetPath(asset: Pick<StoredAsset, "id" | "relativePath">): string {
+  const candidate = path.resolve(dirs().assets, asset.relativePath);
+  if (!isManagedPath(candidate, dirs().assets) || candidate === path.resolve(dirs().assets)) {
+    throw new ApiError("ASSET_NOT_FOUND", `Berkas aset ${asset.id} tidak tersedia`);
+  }
+  return candidate;
 }
 
 export function assetContentPath(asset: StoredAsset): string {
   const candidate = assetPath(asset);
-  if (!fs.existsSync(candidate)) {
-    throw new ApiError("ASSET_NOT_FOUND", `Berkas aset ${asset.id} tidak ada di disk`);
+  try {
+    if (!fs.statSync(candidate).isFile() || !isManagedPath(fs.realpathSync(candidate), fs.realpathSync(dirs().assets))) {
+      throw new Error("Not a managed file");
+    }
+    fs.accessSync(candidate, fs.constants.R_OK);
+  } catch {
+    throw new ApiError("ASSET_NOT_FOUND", `Berkas aset ${asset.id} tidak ada di disk atau tidak dapat dibaca`);
   }
   return candidate;
 }
@@ -78,6 +92,144 @@ export function toPublicAsset(asset: StoredAsset): Asset {
     hasAudio: asset.hasAudio,
     previewReady: asset.previewReady,
   };
+}
+
+const emojiEntrySchema = z.object({
+  id: z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/),
+  codepoint: z.string().max(64).regex(/^[a-fA-F0-9]{4,6}(?:-[a-fA-F0-9]{4,6})*$/),
+  name: z.string().trim().min(1).max(180).regex(/^[^\u0000-\u001f\u007f]+$/),
+  file: z.string().max(120).regex(/^[A-Za-z0-9][A-Za-z0-9._-]*\.png$/).refine((file) => !file.includes("..")),
+  sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+  source: z.string().trim().min(1),
+  license: z.string().trim().min(1),
+});
+const emojiManifestSchema = z.object({ emojis: z.array(emojiEntrySchema).min(1).max(64) });
+const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+function emojiImportError(message: string): ApiError {
+  return new ApiError("DEPENDENCY_UNAVAILABLE", `Bank emoji lokal: ${message}`);
+}
+
+function readEmojiBank() {
+  const directory = path.join(projectRoot, "public", "emoji");
+  let raw: unknown;
+  try {
+    raw = JSON.parse(fs.readFileSync(path.join(directory, "manifest.json"), "utf8"));
+  } catch {
+    throw emojiImportError("manifest belum tersedia atau tidak dapat dibaca");
+  }
+  const parsed = emojiManifestSchema.safeParse(raw);
+  if (!parsed.success) throw emojiImportError("manifest kosong atau tidak valid; periksa berkas, hash, dan attribution");
+  const ids = new Set<string>();
+  const files = new Set<string>();
+  const codepoints = new Set<string>();
+  return parsed.data.emojis.map((entry) => {
+    const codepoint = entry.codepoint.toLowerCase();
+    if (ids.has(entry.id) || files.has(entry.file) || codepoints.has(codepoint)) throw emojiImportError("id, codepoint, atau berkas manifest duplikat");
+    ids.add(entry.id);
+    files.add(entry.file);
+    codepoints.add(codepoint);
+    const file = path.join(directory, entry.file);
+    let bytes: Buffer;
+    try {
+      if (!fs.lstatSync(file).isFile() || !isManagedPath(fs.realpathSync(file), fs.realpathSync(directory))) {
+        throw new Error("Not a local regular file");
+      }
+      const size = fs.statSync(file).size;
+      if (size > 25 * 1024 * 1024) throw new Error("Image too large");
+      bytes = fs.readFileSync(file);
+    } catch {
+      throw emojiImportError(`berkas untuk ${entry.id} tidak tersedia sebagai PNG lokal`);
+    }
+    if (createHash("sha256").update(bytes).digest("hex") !== entry.sha256.toLowerCase()) {
+      throw emojiImportError(`hash ${entry.id} tidak cocok`);
+    }
+    if (bytes.length < 33 || !bytes.subarray(0, 8).equals(PNG_SIGNATURE)
+      || bytes.readUInt32BE(8) !== 13 || bytes.toString("ascii", 12, 16) !== "IHDR") {
+      throw emojiImportError(`${entry.id} bukan PNG yang valid`);
+    }
+    const width = bytes.readUInt32BE(16);
+    const height = bytes.readUInt32BE(20);
+    if (width === 0 || height === 0 || width > 8192 || height > 8192) {
+      throw emojiImportError(`dimensi ${entry.id} tidak valid`);
+    }
+    return { entry, bytes, width, height };
+  });
+}
+
+export async function materializeEmojiAssets(): Promise<StoredAsset[]> {
+  return withLock(MANIFEST_LOCK, () => {
+    // Validate the complete server-owned bank before publishing any entries.
+    const bank = readEmojiBank();
+    const manifest = readAssetManifest();
+    const imported: StoredAsset[] = [];
+    const createdFiles: string[] = [];
+    let changed = false;
+    fs.mkdirSync(dirs().assets, { recursive: true });
+    try {
+      for (const { entry, bytes, width, height } of bank) {
+        const name = `Reaksi: ${entry.name}`;
+        const hash = entry.sha256.toLowerCase();
+        // Codepoints keep the mapping stable when manifest IDs or labels change.
+        const mappingId = entry.codepoint.toLowerCase();
+        const mapped = Object.values(manifest).filter((asset) => asset.emojiManifestId === mappingId);
+        if (mapped.length > 1) throw emojiImportError(`pemetaan ${entry.id} duplikat`);
+        const existing = mapped[0] ?? Object.values(manifest).find((asset) => {
+          if (asset.kind !== "image" || asset.name !== name || asset.emojiManifestId) return false;
+          try {
+            return createHash("sha256").update(fs.readFileSync(assetContentPath(asset))).digest("hex") === hash;
+          } catch {
+            return false;
+          }
+        });
+        if (existing && (existing.kind !== "image" || (existing.emojiSha256 && existing.emojiSha256 !== hash))) {
+          throw emojiImportError(`pemetaan ${entry.id} tidak cocok dengan manifest`);
+        }
+        const id = existing?.id ?? randomUUID();
+        const relativePath = existing?.relativePath ?? `${id}.png`;
+        const destination = assetPath({ relativePath, id });
+        if (fs.existsSync(destination)) {
+          const current = fs.readFileSync(assetContentPath(existing as StoredAsset));
+          if (createHash("sha256").update(current).digest("hex") !== hash) {
+            throw emojiImportError(`konten tersimpan ${entry.id} rusak; tidak ditimpa`);
+          }
+        } else {
+          fs.writeFileSync(destination, bytes, { flag: "wx" });
+          createdFiles.push(destination);
+        }
+        const asset: StoredAsset = existing ?? {
+          id,
+          kind: "image",
+          name,
+          filename: relativePath,
+          relativePath,
+          mimeType: "image/png",
+          sizeBytes: bytes.length,
+          durationFrames: 0,
+          width,
+          height,
+          hasAudio: false,
+          previewReady: true,
+          codec: "png",
+          frameRate: null,
+          proxyRelativePath: null,
+          createdAt: new Date().toISOString(),
+        };
+        const updated = { ...asset, name, emojiManifestId: mappingId, emojiSha256: hash };
+        if (!existing || JSON.stringify(existing) !== JSON.stringify(updated)) {
+          manifest[id] = updated;
+          changed = true;
+        }
+        imported.push(updated);
+      }
+      if (changed) writeAssetManifest(manifest);
+      return imported;
+    } catch (error) {
+      for (const file of createdFiles) removeIfExists(file);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError("DISK_WRITE_FAILED", "Bank emoji lokal gagal disimpan; periksa izin dan ruang disk");
+    }
+  });
 }
 
 const EXTENSION_KIND: Record<string, MediaKind> = {
@@ -288,10 +440,12 @@ async function publishStagedFile(
     createdAt: new Date().toISOString(),
   };
 
-  const manifest = readAssetManifest();
-  manifest[id] = asset;
-  writeAssetManifest(manifest);
-  return asset;
+  return withLock(MANIFEST_LOCK, () => {
+    const manifest = readAssetManifest();
+    manifest[id] = asset;
+    writeAssetManifest(manifest);
+    return asset;
+  });
 }
 
 export function sanitizeDisplayName(name: string): string {
@@ -303,7 +457,6 @@ export function sanitizeDisplayName(name: string): string {
 export async function createPreviewProxy(asset: StoredAsset): Promise<StoredAsset> {
   if (asset.kind !== "video") return asset;
   const source = assetContentPath(asset);
-  const id = randomUUID();
   const relativePath = `${asset.id}.proxy.mp4`;
   const destination = path.join(dirs().assets, relativePath);
   const args = [
@@ -347,11 +500,21 @@ export async function createPreviewProxy(asset: StoredAsset): Promise<StoredAsse
     previewReady: true,
     proxyRelativePath: relativePath,
   };
-  const manifest = readAssetManifest();
-  manifest[asset.id] = updated;
-  writeAssetManifest(manifest);
-  void id;
-  return updated;
+  return withLock(MANIFEST_LOCK, () => {
+    const manifest = readAssetManifest();
+    if (!manifest[asset.id]) throw new ApiError("ASSET_NOT_FOUND", `Aset ${asset.id} tidak ditemukan`);
+    manifest[asset.id] = {
+      ...manifest[asset.id],
+      relativePath: updated.relativePath,
+      filename: updated.filename,
+      mimeType: updated.mimeType,
+      codec: updated.codec,
+      previewReady: updated.previewReady,
+      proxyRelativePath: updated.proxyRelativePath,
+    };
+    writeAssetManifest(manifest);
+    return manifest[asset.id];
+  });
 }
 
 export function assetNeedsProxy(asset: StoredAsset): boolean {

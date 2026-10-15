@@ -19,7 +19,11 @@ export type CompiledEdit = {
 
 export type CompiledCaption = Caption & { segmentIndex: number };
 
-export type CompiledEffect = Effect & { segmentIndex: number; sourceStartOffset: number };
+export type CompiledEffect = Effect & {
+  segmentIndex: number;
+  /** Frames from the original effect's source start to this fragment's source start. */
+  sourceStartOffset: number;
+};
 
 export type BuildParams = {
   startFrame: number;
@@ -73,10 +77,11 @@ function clipToSegments(
       if (start >= end) continue;
       result.push({
         id: event.id,
-        startFrame: segment.outputStart + (start - segStart),
-        endFrame: segment.outputStart + (end - segStart),
+        // The held source frame is active for the whole freeze, not one output frame.
+        startFrame: segment.kind === "freeze" ? segment.outputStart : segment.outputStart + (start - segStart),
+        endFrame: segment.kind === "freeze" ? segment.outputStart + segment.durationFrames : segment.outputStart + (end - segStart),
         segmentIndex: index,
-        offset: start - segStart,
+        offset: start - event.startFrame,
       });
     }
   });

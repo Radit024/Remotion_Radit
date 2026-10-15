@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFilm,
@@ -14,14 +14,15 @@ import {
   faCheck,
   faCircleExclamation,
   faArrowLeft,
+  faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Suggestion } from "@/shared/suggestions";
-import type { Edit } from "@/shared/edit";
+import type { Asset } from "@/shared/edit";
 import {
   fetchProjects,
+  fetchAssets,
   createProject,
   uploadAsset,
   triggerRender,
@@ -45,14 +46,22 @@ import { RenderDialog } from "./RenderDialog";
 export interface EditorProps {
   initialProjectId?: string | null;
   onNavigateHome?: () => void;
+  /** Route-owned selection: changing the project must update the URL, not local state. */
+  onSelectProject?: (id: string) => void;
 }
 
-export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome }) => {
+export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome, onSelectProject }) => {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjectId ?? null);
   const [health, setHealth] = useState<HealthInfo | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [assetsLoading, setAssetsLoading] = useState(true);
+  const [assetsError, setAssetsError] = useState<string | null>(null);
+  const assetRequestGeneration = useRef(0);
   const [activeCenterTab, setActiveCenterTab] = useState<"output" | "source">("output");
   const [activeToolTab, setActiveToolTab] = useState("preset");
+  // Below xl the workspace collapses to a single pane switched by this tab strip.
+  const [mobilePane, setMobilePane] = useState<"tools" | "preview" | "saran">("preview");
   const [currentOutputFrame, setCurrentOutputFrame] = useState(0);
 
   // AI & Render states
@@ -70,20 +79,64 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
     draft,
     isDirty,
     isSaving,
-    error: projectError,
     updateDraft,
     save,
-    reload,
   } = useProject(selectedProjectId);
 
   useEffect(() => {
-    void fetchProjects().then((list) => {
-      setProjects(list);
-      if (list.length > 0 && !selectedProjectId) {
-        setSelectedProjectId(list[0].id);
-      }
-    });
+    // The URL owns the selection; never silently switch to the first project.
+    void fetchProjects().then(setProjects).catch(() => {});
     void fetchHealth().then(setHealth).catch(() => {});
+  }, []);
+
+  // State updates happen only in async continuations so the effect never renders synchronously.
+  const fetchAssetCatalog = useCallback(() => {
+    const generation = assetRequestGeneration.current + 1;
+    assetRequestGeneration.current = generation;
+    return fetchAssets().then(
+      (list) => {
+        if (assetRequestGeneration.current !== generation) return;
+        setAssets(list);
+        setAssetsError(null);
+        setAssetsLoading(false);
+      },
+      (error: unknown) => {
+        if (assetRequestGeneration.current !== generation) return;
+        setAssetsError(error instanceof Error ? error.message : String(error));
+        setAssetsLoading(false);
+      },
+    );
+  }, []);
+
+  const retryAssets = useCallback(() => {
+    setAssetsLoading(true);
+    setAssetsError(null);
+    void fetchAssetCatalog();
+  }, [fetchAssetCatalog]);
+
+  useEffect(() => {
+    void fetchAssetCatalog();
+    return () => {
+      assetRequestGeneration.current += 1;
+    };
+  }, [fetchAssetCatalog]);
+
+  // Only validated catalog assets become renderer URLs; effects never supply arbitrary URLs.
+  const assetUrls = useMemo(() => Object.fromEntries(
+    assets
+      .filter((asset) => asset.kind === "image" || asset.kind === "audio")
+      .map((asset) => [asset.id, `/api/assets/${encodeURIComponent(asset.id)}/content`]),
+  ) as Record<string, string>, [assets]);
+
+  // Full source duration comes from the Asset, not the trimmable endFrame.
+  const sourceDurationFrames = useMemo(() => {
+    const fallback = draft?.endFrame ?? 0;
+    if (!project) return fallback;
+    return assets.find((asset) => asset.id === project.assetId)?.durationFrames ?? fallback;
+  }, [assets, project, draft?.endFrame]);
+
+  const handleAssetUploaded = useCallback((asset: Asset) => {
+    setAssets((previous) => previous.some((existing) => existing.id === asset.id) ? previous : [...previous, asset]);
   }, []);
 
   const handleUploadNewVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,8 +237,8 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground font-ui">
       {/* Top Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-3">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-card px-3 py-2 sm:px-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
           {onNavigateHome && (
             <Button
               type="button"
@@ -202,14 +255,19 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
 
           <div className="flex items-center gap-2">
             <FontAwesomeIcon icon={faFilm} className="h-5 w-5 text-primary" />
-            <span className="font-heading font-bold tracking-tight text-foreground">Takefield Studio</span>
+            <span className="hidden whitespace-nowrap font-heading font-bold tracking-tight text-foreground sm:inline">Takefield Studio</span>
           </div>
 
-          {/* Project selector */}
+          {/* Project selector: selection is route-owned so Back/Forward stays correct. */}
           <select
+            aria-label="Pilih proyek"
             value={selectedProjectId ?? ""}
-            onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="h-8 rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
+            onChange={(e) => {
+              // Route-owned selection remounts with the new id; keep the value URL-consistent.
+              if (onSelectProject) onSelectProject(e.target.value);
+              else setSelectedProjectId(e.target.value);
+            }}
+            className="h-8 min-w-0 max-w-[8.5rem] truncate rounded border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
           >
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -232,7 +290,7 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
         </div>
 
         {/* Center / Right Header Status */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           <div className="flex items-center gap-2 text-xs">
             {health?.ai && !health.ai.enabled && (
               <span
@@ -302,10 +360,40 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
         </div>
       ) : (
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Middle Workspace: 3 Columns (Tools | Preview | AI Suggestions) */}
-          <div className="grid flex-1 grid-cols-12 overflow-hidden">
+          {/* Below xl: one main area at a time so panels never become mini columns. */}
+          <div
+            role="tablist"
+            aria-label="Area kerja editor"
+            className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-2 py-1.5 xl:hidden"
+          >
+            {([
+              { id: "tools", label: "Tools", icon: faLayerGroup },
+              { id: "preview", label: "Hasil / Sumber", icon: faFilm },
+              { id: "saran", label: "Saran", icon: faWandMagicSparkles },
+            ] as const).map((pane) => (
+              <button
+                key={pane.id}
+                type="button"
+                role="tab"
+                aria-selected={mobilePane === pane.id}
+                aria-label={`Tampilkan ${pane.label}`}
+                onClick={() => setMobilePane(pane.id)}
+                className={`inline-flex flex-1 items-center justify-center rounded px-2 py-1.5 text-xs font-medium ${
+                  mobilePane === pane.id
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FontAwesomeIcon icon={pane.icon} className="mr-1.5 h-3.5 w-3.5" />
+                {pane.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Middle Workspace: 3 Columns on xl (Tools | Preview | AI Suggestions) */}
+          <div className="grid flex-1 grid-cols-1 overflow-hidden xl:grid-cols-12">
             {/* Left Column: Tools (Presets, Subtitles, Assets) */}
-            <div className="col-span-3 flex flex-col border-r border-border bg-card p-3 overflow-y-auto">
+            <div className={`min-w-0 flex-col overflow-y-auto border-border bg-card p-3 xl:col-span-3 xl:flex xl:border-r ${mobilePane === "tools" ? "flex" : "hidden"}`}>
               <Tabs value={activeToolTab} onValueChange={setActiveToolTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-background p-0.5">
                   <TabsTrigger value="preset" className="text-xs">
@@ -341,9 +429,16 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
 
                   <TabsContent value="asset" className="m-0">
                     <AssetPanel
+                      assets={assets}
+                      isLoading={assetsLoading}
+                      error={assetsError}
+                      onRetry={retryAssets}
+                      onAssetUploaded={handleAssetUploaded}
                       effects={draft.effects}
                       onChangeEffects={(effects) => updateDraft((prev) => ({ ...prev, effects }))}
                       momentFrame={draft.momentFrame}
+                      endFrame={draft.endFrame}
+                      durationFrames={sourceDurationFrames}
                     />
                   </TabsContent>
                 </div>
@@ -351,7 +446,7 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
             </div>
 
             {/* Center Column: Video Player / Preview & Range Controls */}
-            <div className="col-span-6 flex flex-col items-center justify-between overflow-y-auto p-4 gap-3">
+            <div className={`min-w-0 flex-col items-center justify-between gap-3 overflow-y-auto p-4 xl:col-span-6 xl:flex ${mobilePane === "preview" ? "flex" : "hidden"}`}>
               {/* Tab Switcher between Remotion 9:16 and Source Player */}
               <div className="flex w-full items-center justify-center">
                 <div className="flex rounded-md border border-border bg-background p-0.5">
@@ -386,13 +481,13 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
                   <OutputPreview
                     edit={draft}
                     sourceUrl={sourceUrl}
-                    assetUrls={{}}
+                    assetUrls={assetUrls}
                     onFrameUpdate={setCurrentOutputFrame}
                   />
                 ) : (
                   <SourcePlayer
                     src={sourceUrl}
-                    durationFrames={draft.endFrame}
+                    durationFrames={sourceDurationFrames}
                     startFrame={draft.startFrame}
                     endFrame={draft.endFrame}
                     momentFrame={draft.momentFrame}
@@ -406,7 +501,7 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
               {/* Range Controls */}
               <div className="w-full max-w-xl">
                 <RangeControls
-                  durationFrames={draft.endFrame}
+                  durationFrames={sourceDurationFrames}
                   startFrame={draft.startFrame}
                   endFrame={draft.endFrame}
                   momentFrame={draft.momentFrame}
@@ -423,7 +518,7 @@ export const Editor: React.FC<EditorProps> = ({ initialProjectId, onNavigateHome
             </div>
 
             {/* Right Column: AI Suggestions */}
-            <div className="col-span-3 flex flex-col border-l border-border bg-card p-3 overflow-y-auto">
+            <div className={`min-w-0 flex-col overflow-y-auto border-border bg-card p-3 xl:col-span-3 xl:flex xl:border-l ${mobilePane === "saran" ? "flex" : "hidden"}`}>
               <SuggestionPanel
                 suggestions={suggestions}
                 onApplySuggestion={handleApplySuggestion}

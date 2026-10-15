@@ -46,6 +46,7 @@ export const EffectLayer: React.FC<Props> = ({ effects, assetUrls }) => {
     <AbsoluteFill style={{ pointerEvents: "none" }}>
       {image && image.assetId && assetUrls[image.assetId] ? (
         <Img
+          key={`${image.id}-${image.segmentIndex}`}
           src={assetUrls[image.assetId]}
           style={{
             position: "absolute",
@@ -64,6 +65,7 @@ export const EffectLayer: React.FC<Props> = ({ effects, assetUrls }) => {
       ) : null}
       {reaction ? (
         <div
+          key={`${reaction.id}-${reaction.segmentIndex}`}
           style={{
             position: "absolute",
             top: 140,

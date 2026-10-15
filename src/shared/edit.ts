@@ -31,6 +31,7 @@ export type Layout = (typeof LAYOUTS)[number];
 export const toFrame = (seconds: number): number => Math.round(seconds * FPS);
 export const toSeconds = (frames: number): number => frames / FPS;
 export const formatTimecode = (frames: number): string => {
+  if (!Number.isFinite(frames)) return "--:--.--";
   const total = Math.max(0, Math.round(frames));
   const secondsPart = Math.floor(total / FPS);
   const framePart = total % FPS;
@@ -39,19 +40,12 @@ export const formatTimecode = (frames: number): string => {
   const hundredths = Math.round((framePart / FPS) * 100);
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(hundredths).padStart(2, "0")}`;
 };
-export const parseTimecode = (value: string): number | null => {
-  const match = /^(\d{1,2}):(\d{2})(?:[.,](\d{1,3}))?$/.exec(value.trim());
-  if (!match) return null;
-  const fraction = match[3];
-  let seconds = 0;
-  if (fraction) {
-    const asMillis = fraction.length === 3;
-    const scaled = asMillis ? Number(fraction) / 1000 : Number(fraction) / 100;
-    seconds = scaled;
-  }
-  const total = Math.round((Number(match[1]) * 60 + Number(match[2]) + seconds) * FPS);
-  const rounded = total;
-  return Number.isFinite(rounded) ? rounded : null;
+export const parseTimecode = (value: string): number => {
+  const match = /^(\d+):([0-5]\d)(?:[.,](\d{1,3}))?$/.exec(value.trim());
+  if (!match) return NaN;
+  const fraction = match[3] ? Number(`0.${match[3]}`) : 0;
+  const frames = toFrame(Number(match[1]) * 60 + Number(match[2]) + fraction);
+  return Number.isSafeInteger(frames) ? frames : NaN;
 };
 
 export const idSchema = z
@@ -87,7 +81,17 @@ export const effectSchema = z.strictObject({
   endFrame: z.number().int().positive(),
   text: z.string().max(LIMITS.reactionMax).default(""),
   assetId: z.union([idSchema, z.null()]).default(null),
-  strength: z.number().min(0).max(LIMITS.zoomMax),
+  strength: z.number().min(0),
+}).superRefine((effect, context) => {
+  const min = effect.kind === "zoom" ? LIMITS.zoomMin : 0;
+  const max = effect.kind === "shake" ? LIMITS.shakeMax : LIMITS.zoomMax;
+  if (effect.strength < min || effect.strength > max) {
+    context.addIssue({
+      code: "custom",
+      path: ["strength"],
+      message: `${effect.kind}: strength harus ${min}..${max}`,
+    });
+  }
 });
 
 export const editSchema = z.strictObject({

@@ -1,0 +1,29 @@
+Twemoji graphics by Twitter and contributors, maintained by Jason Sofonia and Justine De Caires, licensed under CC BY 4.0.
+Copyright (c) 2014–2021 Twitter
+Copyright (c) 2022–present Jason Sofonia & Justine De Caires
+
+Official project: https://github.com/jdecked/twemoji
+Release: v17.0.3
+Pinned commit: b6b55fef1e8636b540a6d016a4729ca8cdf2e60b
+Graphics license: Creative Commons Attribution 4.0 International (CC-BY-4.0)
+License URL: https://creativecommons.org/licenses/by/4.0/
+Full license: LICENSE-GRAPHICS (unmodified upstream text)
+Pinned license source: https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/LICENSE-GRAPHICS
+
+Changes: Official SVG artwork rasterized to transparent 512 x 512 RGBA PNG.
+Artwork shapes and colors are otherwise unmodified. No font/glyph substitution.
+Preparation: node scripts/prepare-emoji-assets.mjs (offline, vendored SVG sources).
+Rasterizer used for pinned PNG hashes: sharp 0.35.5, libvips 8.18.7, librsvg 2.63.2.
+PNG encoding: compressionLevel=9, adaptiveFiltering=false, palette=false.
+Keep this credit and the license available when distributing these graphics.
+Twemoji does not endorse this application.
+
+Vendored source files and their original URLs:
+sources/1f602.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f602.svg
+sources/1f923.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f923.svg
+sources/1f480.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f480.svg
+sources/1f62d.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f62d.svg
+sources/1f62e.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f62e.svg
+sources/1f621.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f621.svg
+sources/1f525.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f525.svg
+sources/1f44f.svg -> https://raw.githubusercontent.com/jdecked/twemoji/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f44f.svg

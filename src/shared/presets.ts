@@ -1,5 +1,5 @@
 import type { Edit, Preset } from "./edit";
-import { LIMITS } from "./edit";
+import { LIMITS, ValidationError } from "./edit";
 
 export type PresetEffectSpec = {
   kind: "zoom" | "shake" | "freeze" | "replay";
@@ -72,7 +72,19 @@ export function makePresetEffects(
 }
 
 export function applyPresetDefaults(edit: Edit, preset: Preset): Edit {
-  const effects = makePresetEffects(preset, edit.momentFrame, edit.startFrame, edit.endFrame);
+  const customEffects = edit.effects.filter(
+    (effect) => !(
+      (effect.kind === "zoom" && /^zoom-\d+$/.test(effect.id)) ||
+      (effect.kind === "shake" && /^shake-\d+$/.test(effect.id))
+    ),
+  );
+  const generatedEffects = makePresetEffects(preset, edit.momentFrame, edit.startFrame, edit.endFrame);
+  if (customEffects.length + generatedEffects.length > LIMITS.effectsMax) {
+    throw new ValidationError([
+      `Preset ${preset === "meme" ? "Meme" : "Light"} membutuhkan ${generatedEffects.length} efek bawaan di samping ${customEffects.length} efek custom. Maksimum ${LIMITS.effectsMax} efek; hapus efek dari draft sebelum mengganti preset. Efek custom tidak dihapus otomatis`,
+    ]);
+  }
+  const effects = [...customEffects, ...generatedEffects];
   return {
     ...edit,
     preset,

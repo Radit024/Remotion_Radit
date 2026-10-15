@@ -38,6 +38,13 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export type AiCapabilityInfo = {
+  enabled: boolean;
+  credentialPresent: boolean;
+  modelConfigured: boolean;
+  issues: string[];
+};
+
 export type HealthInfo = {
   status: string;
   ffmpeg: boolean;
@@ -47,6 +54,7 @@ export type HealthInfo = {
     suggestionModel: string;
     transcriptionModel: string;
     sttProvider?: string;
+    capabilities?: { stt: AiCapabilityInfo; suggestions: AiCapabilityInfo };
     issues: string[];
   };
 };
@@ -72,8 +80,22 @@ export async function createProject(assetId: string, name?: string): Promise<Sto
   return data.project;
 }
 
-export async function fetchProject(id: string): Promise<StoredProject> {
-  const res = await fetch(`/api/projects/${id}`);
+export async function fetchProject(id: string, signal?: AbortSignal): Promise<StoredProject> {
+  const res = await fetch(`/api/projects/${id}`, signal ? { signal } : undefined);
+  const data = await handleResponse<{ project: StoredProject }>(res);
+  return data.project;
+}
+
+export async function recoverProjectSource(
+  id: string,
+  assetId: string,
+  revision: number,
+): Promise<StoredProject> {
+  const res = await fetch(`/api/projects/${id}/recover-source`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assetId, revision }),
+  });
   const data = await handleResponse<{ project: StoredProject }>(res);
   return data.project;
 }
@@ -157,8 +179,8 @@ export async function triggerSuggestions(id: string, revision: number): Promise<
   return data.job;
 }
 
-export async function fetchJob(id: string): Promise<JobInfo> {
-  const res = await fetch(`/api/jobs/${id}`);
+export async function fetchJob(id: string, signal?: AbortSignal): Promise<JobInfo> {
+  const res = await fetch(`/api/jobs/${id}`, signal ? { signal } : undefined);
   const data = await handleResponse<{ job: JobInfo }>(res);
   return data.job;
 }

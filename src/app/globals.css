@@ -31,9 +31,9 @@
   --color-track-moment: var(--track-moment);
   --font-ui: var(--font-jakarta), var(--font-sora), sans-serif;
   --font-heading: var(--font-sora), sans-serif;
-  --font-caption: var(--font-jakarta), sans-serif;
-  --font-reaction: var(--font-barlow-condensed);
-  --font-mono: var(--font-ibm-plex-mono);
+  --font-caption: var(--font-sora), "Sora", sans-serif;
+  --font-reaction: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -84,8 +84,67 @@
   }
 }
 
+/* These semantic sizes override typography defaults built into UI primitives. */
+@utility type-heading {
+  font-family: var(--font-heading) !important;
+  font-size: clamp(24px, 2vw, 30px) !important;
+  line-height: 1.25 !important;
+  font-weight: 600 !important;
+}
+
+@utility type-panel-title {
+  font-family: var(--font-heading) !important;
+  font-size: 16px !important;
+  line-height: 24px !important;
+  font-weight: 600 !important;
+}
+
+@utility type-control {
+  font-family: var(--font-ui) !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+}
+
+@utility type-help {
+  font-family: var(--font-ui) !important;
+  font-size: 13px !important;
+  line-height: 20px !important;
+}
+
+@utility type-metadata {
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
+}
+
+@utility type-timecode {
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  line-height: 16px !important;
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  :where(input, button, select, textarea, a):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    scroll-margin-block: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-slot], .editor-panel) *,
+  :where([data-slot], .editor-panel) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @utility panel-scroll {
   overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
